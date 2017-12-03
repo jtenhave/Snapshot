@@ -1,0 +1,19 @@
+{
+  "name": "snapshot",
+  "version": "1.0.0",
+  "description": "Displays stats for finished NHL games as if they were live.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jtenhave/Snapshot.git"
+  },
+  "author": "Jeff ten Have",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/jtenhave/Snapshot/issues"
+  },
+  "homepage": "https://github.com/jtenhave/Snapshot#readme"
+}
