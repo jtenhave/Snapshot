@@ -7,13 +7,13 @@ var scheduleUtils = rewire("../../src/server/scheduleUtils.js");
 describe('scheduleUtils', function() {
   describe('parseScheduleData()', function() {
     const parseScheduleData = scheduleUtils.__get__("parseScheduleData");
-    it("Returns empty if raw game data does not have any dates.", function() {
+    it("Returns empty if no games scheduled.", function() {
         const result = parseScheduleData(samples.noGames);
 
         assert.strictEqual(result.length, 0);
     });
 
-    it("Returns correct parsed game data.", function() {
+    it("Parses schedule data correctly.", function() {
         const expectedGames = samples.multiGames.dates[0].games;
         
         const result = parseScheduleData(samples.multiGames);

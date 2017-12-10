@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "start-all": "npm run start-mongodb && npm run start-server",
-    "start-server": "node server/server.js",
+    "start-server": "node src/server/server.js",
     "start-mongodb": "mkdirp data && start mongod.exe --dbpath data",
     "test": "mocha test/**/*.test.js"
   },
