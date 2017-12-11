@@ -1,37 +1,25 @@
 var express = require("express");
-var jsLogging = require('js-logging');
+var gameUtils = require("./gameUtils");
 var mongodb = require("mongodb");
 var nodeScheduler = require('node-schedule');
+var logger = require('./log');
 var scheduleUtils = require("./scheduleUtils");
 
 const DB_RETRY_INTERVAL = 5000;
 const DB_RETRIES = 5;
+const POLLING_INTERVAL = 15000;
 
-const logger = setupLogger();
 setupServer();
-
-/**
- * Configure logger for the server.
- */
-function setupLogger() {
-	var options = {
-		format: "${timestamp} <${title}> ${message}",
-	    filters: {
-	        info: "white",
-	        warning: "yellow",
-	        error: "red"
-	    }
-	};
-	return jsLogging.console(options);
-}
 
 /**
  * Setup the Snapshot server.
  */
 async function setupServer() {
+	logger.info("Starting Snapshot server.");
 	var db = await connectToMongoDB();
 	await setupNodeScheduler(db);
-    setupExpress();
+	await setupExpress(db);
+	logger.info("Successfully started Snapshot server.");
 }
 
 /**
@@ -76,7 +64,9 @@ async function setupNodeScheduler(database) {
 	// Insert game data into MongoDB
 	var collection = database.collection('games');
 	try {
-		await collection.insertMany(games);
+		for (var game of games) {
+			await collection.findAndModify({ _id: game._id }, [], { $setOnInsert: game }, { upsert: true });
+		}
 	} catch (e) {
 		logger.error(e);
 	}
@@ -95,18 +85,60 @@ async function setupNodeScheduler(database) {
  *  Setup periodic polling of game data.
  */
 function setupDataPolling(games, database) { 
+	logger.info(`Starting game data polling.`);
+	
+	var collection = database.collection('games');
+	var pollingIntervalID = setInterval(async () => {
+		var now = new Date(); 
 
+		// Stop polling if all games are finished.
+		if (games.every(g => g.finished)) {
+			clearInterval(pollingIntervalID);
+			logger.info("All games finished for today.");
+			return;
+		}
+
+		for (let game of games) {
+			if (game.date.getTime() > now.getTime() || game.finished) {
+				continue;
+			}
+
+			try {
+				var polledGameData = await gameUtils.download(game._id);
+				game.finished = polledGameData.finished;
+				await collection.updateOne({ _id : game._id }, { $set: { gameTime : polledGameData.gameTime }});
+			} catch (e) {
+				logger.error(e);
+			}
+		}
+	}, POLLING_INTERVAL);
 }
 
 /**
  * Setup Express web server.
  */
-function setupExpress() {
+function setupExpress(database) {
     var app = express();
-    
-	// Start web server.
-	app.listen(8125, function () {
-	  logger.info('Running Snapshot server');
+	var collection = database.collection('games');
+
+	// Setup time endpoint.
+	app.get('/time', async (request, response) => {
+		var id = request.query.id;
+		var doc = await collection.findOne({ _id: id });
+		if (doc) {
+			response.set('Content-Type', 'application/json');
+			response.send({ gameTime: doc.gameTime });
+		} else {
+			response.status(404).send(`Not found: ${id}`);
+		}
+	});
+
+	return new Promise((resolve, reject) => {
+		// Start web server.
+		app.listen(8125, function () {
+			logger.info('Running Snapshot web server.');
+			resolve();
+		});
 	});
 }
 

@@ -24,7 +24,7 @@ function parseScheduleData(rawScheduleData) {
 
 	return rawScheduleData.dates[0].games.map(game => {
 		return {
-			id: game.gamePk.toString(),
+			_id: game.gamePk.toString(),
 			date: new Date(game.gameDate),
 			playoffs: game.gameType === "P"
 		}

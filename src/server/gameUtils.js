@@ -22,7 +22,7 @@ function parseGameData(rawGameData) {
 	gameData.finished = rawGameData.gameData.status.statusCode === "7";
 	gameData.playoffs = rawGameData.gameData.game.type === "P";
 
-	gameData.encodedGameTime = parseGameTime(rawGameData, gameData.playoffs);
+	gameData.gameTime = parseGameTime(rawGameData, gameData.playoffs);
 	// TODO Parse more stats here.
 
 	return gameData;

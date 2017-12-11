@@ -19,10 +19,10 @@ describe('scheduleUtils', function() {
         const result = parseScheduleData(samples.multiGames);
         
         assert.strictEqual(result.length, expectedGames.length);
-        assert.strictEqual(result[0].id, expectedGames[0].gamePk.toString());
+        assert.strictEqual(result[0]._id, expectedGames[0].gamePk.toString());
         assert.strictEqual(result[0].date.getTime(), new Date(expectedGames[0].gameDate).getTime());
         assert.strictEqual(result[0].playoffs, false);
-        assert.strictEqual(result[1].id, expectedGames[1].gamePk.toString());
+        assert.strictEqual(result[1]._id, expectedGames[1].gamePk.toString());
         assert.strictEqual(result[1].date.getTime(), new Date(expectedGames[1].gameDate).getTime());
         assert.strictEqual(result[1].playoffs, false);
     });

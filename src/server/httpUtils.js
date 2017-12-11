@@ -1,4 +1,5 @@
 var http = require('http');
+var logger = require("./log")
 
 /**
  * Download JSON data from a URL.
@@ -13,7 +14,12 @@ module.exports.download = function download(url) {
 			});
 			 
 			resp.on('end', () => {
-				resolve(JSON.parse(data));
+				try {	
+					resolve(JSON.parse(data));
+				} catch(e) {
+					logger.error(`Failed to parse JSON: ${data}`);
+					reject(e);
+				}	
 			});
 
 		}).on("error", function(e){

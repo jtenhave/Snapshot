@@ -19,7 +19,7 @@ describe('gameUtils', function() {
         it("Parses general game properties correctly for finished game", function() {
             const result = parseGameData(samples.finishedGameData);
     
-            assert.strictEqual(result.encodedGameTime === undefined, false);
+            assert.strictEqual(result.gameTime === undefined, false);
             assert.strictEqual(result.playoffs, false);
             assert.strictEqual(result.finished, true);
         });
@@ -27,7 +27,7 @@ describe('gameUtils', function() {
         it("Parses general game properties correctly for in-progress game", function() {
             const result = parseGameData(samples.inProgressGameData);
     
-            assert.strictEqual(result.encodedGameTime === undefined, false);
+            assert.strictEqual(result.gameTime === undefined, false);
             assert.strictEqual(result.playoffs, false);
             assert.strictEqual(result.finished, false);
         });
@@ -84,6 +84,20 @@ describe('gameUtils', function() {
                     assert.strictEqual(result[i].p, stoppageEvents[i + stoppageEventOffset].about.period);
                 }   
             }
+        });
+
+        it("Play end values not set if still in progress", function() {
+            const playEvents = samples.inProgressGameData.liveData.plays.allPlays
+                .filter(e => playEventNames.indexOf(e.result.event) >= 0);
+
+            const result = parseGameTime(samples.inProgressGameData);
+            const play = result[result.length - 1];
+            const event = playEvents[result.length - 1];
+
+            assert.strictEqual(play.s, toPeriodTime(event.about.periodTime));
+            assert.strictEqual(play.st, new Date(event.about.dateTime).getTime());
+            assert.strictEqual(play.e === undefined, true);
+            assert.strictEqual(play.et === undefined, true);
         });
     });
 });
