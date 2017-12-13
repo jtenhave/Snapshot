@@ -154,6 +154,9 @@ function setupExpress(database) {
 		response.send({ games: games });
 	});
 
+	// Setup static content for Snapshot site.
+	app.use(express.static("src/site"));
+
 	return new Promise((resolve, reject) => {
 		// Start web server.
 		app.listen(8125, function () {
