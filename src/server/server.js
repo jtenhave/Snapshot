@@ -1,3 +1,4 @@
+var dateUtils = require("../common/dateUtils");
 var express = require("express");
 var gameUtils = require("./gameUtils");
 var mongodb = require("mongodb");
@@ -51,24 +52,11 @@ async function setupNodeScheduler(database) {
 	var today = new Date();
 	var tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 1);
 	logger.info(`Scheduling tomorrow's game data download for ${tomorrow}`);
-	nodeScheduler.scheduleJob(tomorrow, () => setupScheduler(database));
+	nodeScheduler.scheduleJob(tomorrow, () => setupNodeScheduler(database));
 
-	logger.info("Downloading today's game data");
-	var games = await scheduleUtils.download();
-	logger.info(`Downloaded data for the ${games.length} games today.`);
-
+	var games = await getScheduleForDay(database, dateUtils.formatShortDate(today));
 	if (!games.length) {
 		return;
-	}
-
-	// Insert game data into MongoDB
-	var collection = database.collection('games');
-	try {
-		for (var game of games) {
-			await collection.findAndModify({ _id: game._id }, [], { $setOnInsert: game }, { upsert: true });
-		}
-	} catch (e) {
-		logger.error(e);
 	}
 
 	var startDates = games.map(g => g.date.getTime()).sort((a, b) => a - b);
@@ -115,11 +103,37 @@ function setupDataPolling(games, database) {
 }
 
 /**
+ * Gets the list of games scheduled for today. Downloads from the NHL API if necessary.
+ */
+async function getScheduleForDay(database, dateString) {
+	var scheduleCollection = database.collection("schedule");
+	var gamesCollection = database.collection("games");
+	var games;
+
+	try {
+		var schedule = await scheduleCollection.findOne({ _id: dateString });
+		if (schedule) {
+			games = await gamesCollection.find({ _id : { "$in": schedule.games }}).project({ date: 1, playoffs: 1 }).toArray();
+		} else {
+			logger.info(`Downloading game data for ${dateString}`);
+			games = await scheduleUtils.download(dateString);
+			await scheduleCollection.insertOne({ _id: dateString, games: games.map(g => g._id) })
+			await gamesCollection.insertMany(games);
+			logger.info(`Downloaded game data for ${games.length} on ${dateString}`);	
+		}
+	} catch(e) {
+		logger.error(e);
+	}
+
+	return games;
+}
+
+/**
  * Setup Express web server.
  */
 function setupExpress(database) {
     var app = express();
-	var collection = database.collection('games');
+	var collection = database.collection("games");
 
 	// Setup time endpoint.
 	app.get('/time', async (request, response) => {
@@ -131,6 +145,13 @@ function setupExpress(database) {
 		} else {
 			response.status(404).send(`Not found: ${id}`);
 		}
+	});
+
+	app.get('/schedule', async (request, response) => {
+		var date = request.query.date;
+		var games = await getScheduleForDay(database, date);
+		response.set('Content-Type', 'application/json');
+		response.send({ games: games });
 	});
 
 	return new Promise((resolve, reject) => {

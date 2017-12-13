@@ -1,12 +1,10 @@
 var httpUtils = require('./httpUtils');
-var dateUtils = require("../common/dateUtils");
 
 /**
  * Download data for games scheduled today.
  */
-module.exports.download = async function download() {
-	var today = dateUtils.formatShortDate(new Date());
-	var url = `http://statsapi.web.nhl.com/api/v1/schedule?startDate=${today}&endDate=${today}`;
+module.exports.download = async function download(dateString) {
+	var url = `http://statsapi.web.nhl.com/api/v1/schedule?startDate=${dateString}&endDate=${dateString}`;
 
 	var result = await httpUtils.download(url);
 	return parseScheduleData(result);
