@@ -1,18 +1,44 @@
 <html>
 	<head> 
-		<title>Select Game</title>
+		<title>Select Game</title>		
+		<link href="css/table.css" rel="stylesheet">
 		<link href="css/snapshot.css" rel="stylesheet">
+		<link href="css/index.css" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css?family=Sintony" rel="stylesheet">
+		<script src="dateUtils.js"></script>
+		<script src="js/index.js"></script>
+		<script src="js/restUtils.js"></script>
 	</head>
 	
-	<body>
+	<body onload="init();">
 		<div class="snapshot-header">
 			<h1>SNAPSHOT</h1>
 		</div>
 		<div class="snapshot-page">
 			<h2 class="snapshot-page-title">Select Game to Replay</h2>
 			<div class="snapshot-page-content">
-				
+				<form>
+					<input type ="date" id ="date-input" min="2017-10-04" max="2018-04-07"/>
+				</form>
+				<h3 id="date-label">PUT DATE HERE</h3>
+				<table>
+					<thead>
+						<tr>
+							<th>Matchup</th>
+							<th>Time</th>
+							<th>Replay</th>
+						</tr>
+					</thead>
+					<tbody id="schedule-table">
+					</tbody>
+				</table>
+				<template id="schedule-table-row">
+					<tr>
+						<td class="matchup-row"></td>
+						<td></td>
+						<td></td>
+					</tr>
+				</template>
 			</div>		
 		</div>
 	</body>

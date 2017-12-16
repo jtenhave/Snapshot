@@ -94,7 +94,12 @@ function setupDataPolling(games, database) {
 			try {
 				var polledGameData = await gameUtils.download(game._id);
 				game.finished = polledGameData.finished;
-				await collection.updateOne({ _id : game._id }, { $set: { gameTime : polledGameData.gameTime }});
+				await collection.updateOne({ _id : game._id }, { 
+					$set: { 
+						gameTime : polledGameData.gameTime, 
+						started: polledGameData.gameTime.length > 0 
+					}
+				});
 			} catch (e) {
 				logger.error(e);
 			}
@@ -113,12 +118,16 @@ async function getScheduleForDay(database, dateString) {
 	try {
 		var schedule = await scheduleCollection.findOne({ _id: dateString });
 		if (schedule) {
-			games = await gamesCollection.find({ _id : { "$in": schedule.games }}).project({ date: 1, playoffs: 1 }).toArray();
+			games = await gamesCollection.find({ _id : { "$in": schedule.games }})
+				.project({ date: 1, playoffs: 1, home: 1, away: 1, started: 1 })
+				.toArray();
 		} else {
 			logger.info(`Downloading game data for ${dateString}`);
 			games = await scheduleUtils.download(dateString);
 			await scheduleCollection.insertOne({ _id: dateString, games: games.map(g => g._id) })
-			await gamesCollection.insertMany(games);
+			if (games.length > 0) {
+				await gamesCollection.insertMany(games);
+			}
 			logger.info(`Downloaded game data for ${games.length} on ${dateString}`);	
 		}
 	} catch(e) {
@@ -156,6 +165,7 @@ function setupExpress(database) {
 
 	// Setup static content for Snapshot site.
 	app.use(express.static("src/site"));
+	app.use(express.static("src/common"));
 
 	return new Promise((resolve, reject) => {
 		// Start web server.

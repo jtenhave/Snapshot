@@ -24,7 +24,10 @@ function parseScheduleData(rawScheduleData) {
 		return {
 			_id: game.gamePk.toString(),
 			date: new Date(game.gameDate),
-			playoffs: game.gameType === "P"
+			playoffs: game.gameType === "P",
+			home: game.teams.home.team,
+			away: game.teams.away.team,
+			started: false
 		}
 	});
 }

@@ -1,0 +1,13 @@
+td.matchup-row {
+    width: 50%;
+}
+
+div.matchup-content { 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+img.logo {
+    margin: 10;
+}
