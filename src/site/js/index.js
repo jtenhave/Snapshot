@@ -1,16 +1,24 @@
-var lastDate;
-var scheduleCache = new Map();
+const scheduleCache = new Map();
+let lastDate;
+let scheduleRowTemplate;
 
+/**
+ * Initialization to do when the page is loaded.
+ */
 async function init() {
+	scheduleRowTemplate =  $("#schedule-table-row-template").html();
+	
 	const date = formatShortDate(new Date());
-
-	const dateInput = document.querySelector("#date-input");
-	dateInput.onchange = dateInput.onclick = e => { 
-		if (!dateInput.validity.badInput) {
+	const dateInput = $("#date-input");
+	const change = e => { 
+		if (!dateInput[0].validity.badInput) {
 			updateScheduleData(e.target.value);
 		}
 	};
-	dateInput.value = date;
+
+	dateInput.change(change);
+	dateInput.click(change);
+	dateInput.val(date);
 	await updateScheduleData(date);
 }
 
@@ -22,13 +30,13 @@ async function updateScheduleData(dateString) {
 		return;
 	}
 
-	document.querySelector("#date-label").textContent = formatLongDate(new Date(dateString));
+	$("#date-label").text(formatLongDate(new Date(dateString)));
 
 	lastDate = dateString;
 
 	// Display the loading icon 
-	var table = document.querySelector("#schedule-table");
-	table.innerHTML = `<img class="content-loading" src="images/content-loading.png"></img>`;
+	const table = $("#schedule-table");
+	table.html($("#content-loading-template").html());
 
 	// Download game data if needed.
 	if (!scheduleCache.has(dateString)) {
@@ -36,38 +44,19 @@ async function updateScheduleData(dateString) {
 		scheduleCache.set(dateString, schedule);
 	}
 
-	table.removeChild(table.lastChild);
+	table.empty();
 
-	var games = scheduleCache.get(dateString).games;
+	const games = scheduleCache.get(dateString).games;
 	if (games.length > 0) {
 		for (const game of games) {
-			var tr = createTableRow(game);
-			table.appendChild(tr);
+			if (!game.time) {
+				game.time = formatTime(new Date(game.date))
+			}
+
+			// Format the row template with the game data.
+			table.append(Mustache.render(scheduleRowTemplate, game));
 		}
 	} else {
-		table.textContent = `NO GAMES SCHEDULED`;
+		table.text("NO GAMES SCHEDULED");
 	}
-}
-
-/**
- * Create a row in the schedule table.
- */
-function createTableRow(game) {
-   	var tr = document.querySelector("#schedule-table-row"),
-	td = tr.content.querySelectorAll("td");
-	
-	td[0].innerHTML = `<div class="matchup-content">
-							<img class="logo" src="images/teams/${game.away.id}.png"></img>
-							 ${game.away.name} @ 
-							<img class="logo" src="images/teams/${game.home.id}.png"></img> ${game.home.name}
-						</div>`;
-						
-	td[1].textContent = formatTime(new Date(game.date));
-	if (game.started) {
-		td[2].innerHTML = `<a href="/replay.html?game=${game._id}">REPLAY</a>`;
-	} else {
-		td[2].textContent = "NOT AVAILABLE";
-	}
-
-	return document.importNode(tr.content, true);
 }

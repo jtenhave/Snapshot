@@ -5,6 +5,8 @@
 		<link href="css/snapshot.css" rel="stylesheet">
 		<link href="css/index.css" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css?family=Sintony" rel="stylesheet">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.js"></script>
 		<script src="dateUtils.js"></script>
 		<script src="js/index.js"></script>
 		<script src="js/restUtils.js"></script>
@@ -20,7 +22,7 @@
 				<form>
 					<input type ="date" id ="date-input" min="2017-10-04" max="2018-04-07"/>
 				</form>
-				<h3 id="date-label">PUT DATE HERE</h3>
+				<h3 id="date-label"></h3>
 				<table>
 					<thead>
 						<tr>
@@ -32,12 +34,25 @@
 					<tbody id="schedule-table">
 					</tbody>
 				</table>
-				<template id="schedule-table-row">
+				<template id="schedule-table-row-template">
 					<tr>
-						<td class="matchup-row"></td>
-						<td></td>
-						<td></td>
+						<td class="matchup-row">
+							<div class="matchup-content">
+								<img class="logo" src="images/teams/{{away.id}}.png"></img>
+								 {{away.name}} @ 
+								<img class="logo" src="images/teams/{{home.id}}.png"></img> 
+								{{home.name}}
+							</div>
+						</td>
+						<td>{{time}}</td>
+						<td>
+							{{#started}}<a href="/sync.html?game={{_id}}">REPLAY</a>{{/started}}
+							{{^started}}NOT AVAILABLE{{/started}}
+						</td>
 					</tr>
+				</template>
+				<template id="content-loading-template">
+					<img class="content-loading" src="images/content-loading.png"></img>
 				</template>
 			</div>		
 		</div>
