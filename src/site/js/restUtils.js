@@ -7,6 +7,13 @@ async function downloadSchedule(dateString) {
 }
 
 /**
+ * Download game data for a given game ID.
+ */
+async function downloadGame(id) {
+    return await download(`${window.location.protocol}/game?id=${id}`);
+}
+
+/**
  * Download data from a url.
  */
 function download(url) {

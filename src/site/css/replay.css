@@ -1,0 +1,18 @@
+#replay-matchup { 
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+img.logo {
+    margin: 10;
+}
+
+.sync-input {
+    margin: 20
+}
+
+#sync-error {
+    font-style: italic;
+	color: red;
+}

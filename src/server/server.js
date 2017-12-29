@@ -119,8 +119,8 @@ async function getScheduleForDay(database, dateString) {
 		var schedule = await scheduleCollection.findOne({ _id: dateString });
 		if (schedule) {
 			games = await gamesCollection.find({ _id : { "$in": schedule.games }})
-				.project({ date: 1, playoffs: 1, home: 1, away: 1, started: 1 })
-				.toArray();
+			.project({ date: 1, playoffs: 1, home: 1, away: 1, started: 1 })
+			.toArray();
 		} else {
 			logger.info(`Downloading game data for ${dateString}`);
 			games = await scheduleUtils.download(dateString);
@@ -144,18 +144,19 @@ function setupExpress(database) {
     var app = express();
 	var collection = database.collection("games");
 
-	// Setup time endpoint.
-	app.get('/time', async (request, response) => {
+	// Setup game endpoint.
+	app.get('/game', async (request, response) => {
 		var id = request.query.id;
 		var doc = await collection.findOne({ _id: id });
 		if (doc) {
 			response.set('Content-Type', 'application/json');
-			response.send({ gameTime: doc.gameTime });
+			response.send(doc);
 		} else {
 			response.status(404).send(`Not found: ${id}`);
 		}
 	});
 
+	// Setup schedule endpoint.
 	app.get('/schedule', async (request, response) => {
 		var date = request.query.date;
 		var games = await getScheduleForDay(database, date);

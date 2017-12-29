@@ -1,0 +1,63 @@
+<html>
+	<head> 
+		<title>Replay Game</title>
+		<link href="css/table.css" rel="stylesheet">
+		<link href="css/snapshot.css" rel="stylesheet">
+		<link href="css/replay.css" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css?family=Sintony" rel="stylesheet">
+		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.js"></script>
+		<script src="dateUtils.js"></script>
+		<script src="js/sync/PVRWebSocket.js"></script>
+		<script src="js/replay.js"></script>
+		<script src="js/restUtils.js"></script>
+	</head>
+	
+	<body onload="init();">
+		<div class="snapshot-header">
+			<h1>SNAPSHOT</h1>
+		</div>
+		<div class="snapshot-page">
+		<h2 class="snapshot-page-title">Synchronize Snapshot With Game</h2>
+		<div id="replay-matchup"></div>
+		<div id="replay-content"></div>
+		<template id="matchup-template">
+			<h3>{{time}}</h3>
+			<img class="logo" src="images/teams/{{away.id}}.png"></img>{{away.name}} @ 
+			<img class="logo" src="images/teams/{{home.id}}.png"></img>{{home.name}}
+		</template>
+		<template id="content-loading-template">
+			<img class="content-loading" src="images/content-loading.png"></img>
+		</template>
+		<template id="snapshot-sync-template"> 
+			<table>
+				<thead>
+					<tr>
+						<th>Synchonization Method</th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td>
+							<input type="radio" name="sync" value="pvr" class="sync-input" checked="checked"><b>PVR Multicast via WebSocket</b></input>
+							<input type="text" placeholder="host:port" class="sync-input" id="ws-address"></input>
+							<i>(e.g. 192.168.1.67:8080)</i>
+						</td>
+						
+					</tr>
+					<tr>
+						<td>
+							<input type="radio" name="sync" value="none" class="sync-input"><b>Manual</b></input>
+						</td>
+					</tr>
+					<tr>
+						<td>
+							<button type="button" class="sync-input" onclick="sync()">Sync</button>
+							<label id="sync-error"></label>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</template>
+	</body>
+</html>
