@@ -5,7 +5,11 @@ async function init() {
 	const date = formatShortDate(new Date());
 
 	const dateInput = document.querySelector("#date-input");
-	dateInput.onchange = dateInput.onclick = e => updateScheduleData(e.target.value);
+	dateInput.onchange = dateInput.onclick = e => { 
+		if (!dateInput.validity.badInput) {
+			updateScheduleData(e.target.value);
+		}
+	};
 	dateInput.value = date;
 	await updateScheduleData(date);
 }
