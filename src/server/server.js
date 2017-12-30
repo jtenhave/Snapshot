@@ -119,8 +119,8 @@ async function getScheduleForDay(database, dateString) {
 		var schedule = await scheduleCollection.findOne({ _id: dateString });
 		if (schedule) {
 			games = await gamesCollection.find({ _id : { "$in": schedule.games }})
-			.project({ date: 1, playoffs: 1, home: 1, away: 1, started: 1 })
-			.toArray();
+				.project({ date: 1, playoffs: 1, home: 1, away: 1, started: 1 })
+				.toArray();
 		} else {
 			logger.info(`Downloading game data for ${dateString}`);
 			games = await scheduleUtils.download(dateString);

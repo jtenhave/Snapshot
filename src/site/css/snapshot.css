@@ -9,7 +9,7 @@ body {
 	margin: 0;
 }
 
-div.snapshot-header {
+#snapshot-header {
 	background-color: #d2d2d2;
 	font-family: nhl;
 	font-size: 25;
@@ -17,7 +17,7 @@ div.snapshot-header {
 	padding-left: 20;
 }
 
-div.snapshot-page {
+#snapshot-page {
 	background-color: #ffffff;
 	margin: 20;
 	padding-top: 15;
@@ -27,11 +27,11 @@ div.snapshot-page {
 	height: auto;
 }
 
-h2.snapshot-page-title {
+#snapshot-page-title {
 	margin: 0;
 }
 
-div.snapshot-page-content {
+#snapshot-page-content {
 	padding-top: 15;
 }
 
