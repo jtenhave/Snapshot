@@ -28,6 +28,8 @@
   "devDependencies": {
     "mkdirp": "0.5.1",
     "mocha": "~4.0.1",
-    "rewire": "~3.0.2"
+    "rewire": "~3.0.2",
+    "websocket": "~1.0.24",
+    "xml2js-parser": "~1.1.1"
   }
 }
