@@ -21,7 +21,7 @@ class PVRWebSocket {
         
                 ws.addEventListener("message", event => {
                     if (this.callback) {
-                        callback(parseInt(event.data))
+                        this.callback(parseInt(event.data))
                     }
                 });
 

@@ -60,7 +60,7 @@ client.bind(PORT); // Linux: client.bind(PORT, HOST);
  * Handle multicast packet.
  */
 async function handleMessage(message, remote) {
-	const content = message.toString();
+	let content = message.toString();
 	const headerIndex = content.indexOf(requestLine);
 	if (headerIndex < 0) {
 		return;
@@ -102,7 +102,8 @@ async function handleMessage(message, remote) {
  * Parse the packet header.
  */
 function parseHeaders(body) {
-	const match, results = [];
+	let match;
+	const results = [];
 	while (match = headerRegex.exec(body)) {
 		results.push([match[1], match[2]]);
 	}

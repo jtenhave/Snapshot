@@ -111,6 +111,7 @@ function setupDataPolling(games, database) {
  * Gets the list of games scheduled for today. Downloads from the NHL API if necessary.
  */
 async function getScheduleForDay(database, dateString) {
+	const now = new Date();
 	var scheduleCollection = database.collection("schedule");
 	var gamesCollection = database.collection("games");
 	var games;
@@ -126,6 +127,14 @@ async function getScheduleForDay(database, dateString) {
 			games = await scheduleUtils.download(dateString);
 			await scheduleCollection.insertOne({ _id: dateString, games: games.map(g => g._id) })
 			if (games.length > 0) {
+				for (const game of games) {
+					if (now.getTime() > game.date.getTime()) {
+						const gameData = await gameUtils.download(game._id);
+						game.gameTime = gameData.gameTime;
+						game.started = gameData.gameTime.length > 0;
+					}
+				}
+
 				await gamesCollection.insertMany(games);
 			}
 			logger.info(`Downloaded game data for ${games.length} on ${dateString}`);	
