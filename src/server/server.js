@@ -97,7 +97,8 @@ function setupDataPolling(games, database) {
 				await collection.updateOne({ _id : game._id }, { 
 					$set: { 
 						gameTime : polledGameData.gameTime, 
-						started: polledGameData.gameTime.length > 0 
+						started: polledGameData.gameTime.length > 0,
+						teamStats: polledGameData.teamStats
 					}
 				});
 			} catch (e) {
