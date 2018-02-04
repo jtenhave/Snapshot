@@ -1,10 +1,10 @@
-var dateUtils = require("../common/dateUtils");
-var express = require("express");
-var gameUtils = require("./gameUtils");
-var mongodb = require("mongodb");
-var nodeScheduler = require('node-schedule');
-var logger = require('./log');
-var scheduleUtils = require("./scheduleUtils");
+const dateUtils = require("../common/dateUtils");
+const express = require("express");
+const GameData = require("./data/GameData");
+const mongodb = require("mongodb");
+const nodeScheduler = require('node-schedule');
+const logger = require('./log');
+const GameInfo = require("./data/GameInfo");
 
 const DB_RETRY_INTERVAL = 5000;
 const DB_RETRIES = 5;
@@ -17,7 +17,7 @@ setupServer();
  */
 async function setupServer() {
 	logger.info("Starting Snapshot server.");
-	var db = await connectToMongoDB();
+	const db = await connectToMongoDB();
 	await setupNodeScheduler(db);
 	await setupExpress(db);
 	logger.info("Successfully started Snapshot server.");
@@ -27,13 +27,13 @@ async function setupServer() {
  * Connect to MongoDB.
  */
 async function connectToMongoDB() {
-	var url = 'mongodb://localhost:27017/snapshot';
-	for (var i = 1; i <= DB_RETRIES; i++) {
+	const url = 'mongodb://localhost:27017/snapshot';
+	for (let i = 1; i <= DB_RETRIES; i++) {
 		logger.info(`Connecting to MongoDB. Attempt: ${i}`);
 
 		try {
-            var db = await mongodb.MongoClient.connect(url);
-            logger.info(`Successfully connected to MongoDB.`);
+            const db = await mongodb.MongoClient.connect(url);
+            logger.info("Successfully connected to MongoDB.");
             return db;
 		} catch (e) {
 			logger.warning(e);
@@ -49,21 +49,22 @@ async function connectToMongoDB() {
  * Setup node scheduler to download game data.
  */
 async function setupNodeScheduler(database) {
-	var today = new Date();
-	var tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 1);
+	const today = new Date();
+	const tomorrow = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 1, 1);
 	logger.info(`Scheduling tomorrow's game data download for ${tomorrow}`);
 	nodeScheduler.scheduleJob(tomorrow, () => setupNodeScheduler(database));
 
-	var games = await getScheduleForDay(database, dateUtils.formatShortDate(today));
+	const games = await getScheduleForDay(database, dateUtils.formatShortDate(today));
 	if (!games.length) {
 		return;
 	}
 
-	var startDates = games.map(g => g.date.getTime()).sort((a, b) => a - b);
+	// Check if any games have started yet. 
+	const startDates = games.map(g => g.date.getTime()).sort((a, b) => a - b);
 	if (startDates.some(d => d < today.getTime())) {
 		setupDataPolling(games, database);
 	} else {
-		var pollingTime =new Date(startDates[0]);
+		const pollingTime =new Date(startDates[0]);
 		logger.info(`No games on yet. Scheduling game data polling for ${pollingTime}`);
 		nodeScheduler.scheduleJob(pollingTime, () => setupDataPolling(games, database));
 	}
@@ -75,9 +76,9 @@ async function setupNodeScheduler(database) {
 function setupDataPolling(games, database) { 
 	logger.info(`Starting game data polling.`);
 	
-	var collection = database.collection('games');
-	var pollingIntervalID = setInterval(async () => {
-		var now = new Date(); 
+	const gameDataCollection = database.collection("gameData");
+	const pollingIntervalID = setInterval(async () => {
+		const now = new Date(); 
 
 		// Stop polling if all games are finished.
 		if (games.every(g => g.finished)) {
@@ -87,19 +88,21 @@ function setupDataPolling(games, database) {
 		}
 
 		for (let game of games) {
+			// Only download data if the game is current on.
 			if (game.date.getTime() > now.getTime() || game.finished) {
 				continue;
 			}
 
 			try {
-				var polledGameData = await gameUtils.download(game._id);
-				game.finished = polledGameData.finished;
-				await collection.updateOne({ _id : game._id }, { 
-					$set: { 
-						gameTime : polledGameData.gameTime, 
-						started: polledGameData.gameTime.length > 0 
-					}
-				});
+				const gameData = await GameData.download(game._id);
+				if (game.lastGameData) {
+					// TODO: Merge with last polled.
+				}
+				
+				game.finished = gameData.finished;
+				game.lastGameData = gameData;
+
+				await gameDataCollection.replaceOne({ _id : game._id }, gameData.toJSON());
 			} catch (e) {
 				logger.error(e);
 			}
@@ -112,51 +115,52 @@ function setupDataPolling(games, database) {
  */
 async function getScheduleForDay(database, dateString) {
 	const now = new Date();
-	var scheduleCollection = database.collection("schedule");
-	var gamesCollection = database.collection("games");
-	var games;
+	const scheduleCollection = database.collection("schedule");
+	const gameInfoCollection = database.collection("gameInfo");
+	const gameDataCollection = database.collection("gameData");
+	let gameInfos;
 
 	try {
-		var schedule = await scheduleCollection.findOne({ _id: dateString });
+		const schedule = await scheduleCollection.findOne({ _id: dateString });
 		if (schedule) {
-			games = await gamesCollection.find({ _id : { "$in": schedule.games }})
-				.project({ date: 1, playoffs: 1, home: 1, away: 1, started: 1 })
-				.toArray();
+			gameInfos = await gameInfoCollection.find({ _id : { "$in": schedule.games }}).toArray();
 		} else {
 			logger.info(`Downloading game data for ${dateString}`);
-			games = await scheduleUtils.download(dateString);
-			await scheduleCollection.insertOne({ _id: dateString, games: games.map(g => g._id) })
-			if (games.length > 0) {
-				for (const game of games) {
-					if (now.getTime() > game.date.getTime()) {
-						const gameData = await gameUtils.download(game._id);
-						game.gameTime = gameData.gameTime;
-						game.started = gameData.gameTime.length > 0;
+			gameInfos = await GameInfo.download(dateString);
+			await scheduleCollection.insertOne({ _id: dateString, games: gameInfos.map(g => g._id) });
+			if (gameInfos.length > 0) {
+				for (const gameInfo of gameInfos) {
+					// Download live data for games that might already be over.
+					if (now.getTime() > gameInfo.date.getTime()) {
+						const gameData = await GameData.download(gameInfo._id);
+						gameInfo.started = gameData.started;
+
+						await gameDataCollection.insertOne(gameData.toJSON());
 					}
 				}
 
-				await gamesCollection.insertMany(games);
+				await gameInfoCollection.insertMany(gameInfos);
 			}
-			logger.info(`Downloaded game data for ${games.length} on ${dateString}`);	
+			logger.info(`Downloaded game data for ${gameInfos.length} games on ${dateString}`);	
 		}
 	} catch(e) {
 		logger.error(e);
 	}
 
-	return games;
+	return gameInfos;
 }
 
 /**
  * Setup Express web server.
  */
 function setupExpress(database) {
-    var app = express();
-	var collection = database.collection("games");
+    const app = express();
+	const gameDataCollection = database.collection("gameData");
 
 	// Setup game endpoint.
 	app.get('/game', async (request, response) => {
-		var id = request.query.id;
-		var doc = await collection.findOne({ _id: id });
+		const id = parseInt(request.query.id);
+		const doc = await gameDataCollection.findOne({ _id: id });
 		if (doc) {
 			response.set('Content-Type', 'application/json');
 			response.send(doc);
@@ -167,8 +171,8 @@ function setupExpress(database) {
 
 	// Setup schedule endpoint.
 	app.get('/schedule', async (request, response) => {
-		var date = request.query.date;
-		var games = await getScheduleForDay(database, date);
+		const date = request.query.date;
+		const games = await getScheduleForDay(database, date);
 		response.set('Content-Type', 'application/json');
 		response.send({ games: games });
 	});
