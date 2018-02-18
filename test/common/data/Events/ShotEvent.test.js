@@ -9,6 +9,7 @@ describe("ShotEvent", () => {
 
             const event = new ShotEvent(rawEvent);
 
+            assert.strictEqual(event.isInPlayEvent, true);
             assert.strictEqual(event.period, 1);
             assert.strictEqual(event.shooter, "8469521");
         });

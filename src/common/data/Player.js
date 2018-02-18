@@ -7,16 +7,7 @@ const timeUtils = require("../timeUtils");
  */
 class Player {
 
-    constructor (rawData) {
-        if (rawData) {
-            this.id = rawData.person.id.toString();
-            this.name = rawData.person.fullName;
-
-            if (rawData.stats.skaterStats) {
-                this.toi = timeUtils.toPeriodTime(rawData.stats.skaterStats.timeOnIce);
-            }   
-        }
-        
+    constructor (rawData) { 
         this.goals = new EventData(),
         this.assists = new EventData(),
         this.shots = new EventData(),
@@ -24,6 +15,15 @@ class Player {
         this.faceoffLoss = new EventData(),
         this.hits = new EventData(),
         this.tois = new PolledData();
+        
+        if (rawData) {
+            this.id = rawData.person.id.toString();
+            this.name = rawData.person.fullName;
+
+            if (rawData.stats.skaterStats) {
+                this.toi = timeUtils.toPeriodTime(rawData.stats.skaterStats.timeOnIce);
+            }   
+        } 
     }
 
     /**

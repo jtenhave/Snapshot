@@ -9,6 +9,7 @@ describe("StoppageEvent", () => {
 
             const event = new StoppageEvent(rawEvent);
 
+            assert.strictEqual(event.isPlayStopEvent, true);
             assert.strictEqual(event.period, 1);
         });
     });

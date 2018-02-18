@@ -7,6 +7,8 @@ class TakeawayEvent extends Event {
     
     constructor(rawData) {
         super(rawData);
+
+        this.isInPlayEvent = true;
     }
 }
 

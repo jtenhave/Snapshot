@@ -9,8 +9,9 @@ class Play {
      * Stops a play.
      */
     stop(event) {
-        this.end = timeUtils.toPeriodTime(event.about.periodTime);
-        this.endTimestamp = new Date(event.about.dateTime).getTime();
+        this.end = event.periodTime;
+        this.endTimestamp = event.timestamp;
+        this.finished = true;
 
         // Reset the start time based on the end time. We have to do this because timestamps from the
         // NHL API are not accurate.
@@ -36,9 +37,10 @@ class Play {
      */
     static start(event) {
         const play = new Play();
-        play.start = timeUtils.toPeriodTime(event.about.periodTime);
-        play.startTimestamp = new Date(event.about.dateTime).getTime();
-        play.period = event.about.period;
+        play.start = event.periodTime;
+        play.startTimestamp = event.timestamp;
+        play.period = event.period;
+        play.finished = false;
 
         return play;
     }

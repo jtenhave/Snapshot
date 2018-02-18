@@ -9,6 +9,7 @@ describe("BlockedShotEvent", () => {
             
             const event = new BlockedShotEvent(rawEvent);
 
+            assert.strictEqual(event.isInPlayEvent, true);
             assert.strictEqual(event.period, 1);
             assert.strictEqual(event.blocker, "8476470");
             assert.strictEqual(event.shooter, "8475848");

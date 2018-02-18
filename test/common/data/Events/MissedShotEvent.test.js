@@ -9,6 +9,7 @@ describe("MissedShotEvent", () => {
             
             const event = new MissedShotEvent(rawEvent);
 
+            assert.strictEqual(event.isInPlayEvent, true);
             assert.strictEqual(event.period, 1);
             assert.strictEqual(event.shooter, "8476948");
         });

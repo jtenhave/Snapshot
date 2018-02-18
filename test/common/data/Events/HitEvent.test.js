@@ -9,6 +9,7 @@ describe("HitEvent", () => {
             
             const event = new HitEvent(rawEvent);
 
+            assert.strictEqual(event.isInPlayEvent, true);
             assert.strictEqual(event.period, 1);
             assert.strictEqual(event.hitter, "8470642");
             assert.strictEqual(event.hittee, "8476878");

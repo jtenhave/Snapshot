@@ -21,6 +21,13 @@ class Team {
     }
 
     /**
+     * Finds a player on a team given their ID.
+     */
+    findPlayer(id) {
+        return this.players.find(p => p.id === id);
+    }
+
+    /**
      * Returns a minified JSON object.
      */
     toJSON() {

@@ -8,8 +8,9 @@ class FaceoffEvent extends Event {
     constructor(rawData) {
         super(rawData);
 
-        this.winner = this.findPlayer("Winner");
-        this.loser = this.findPlayer("Loser");
+        this.isPlayStartEvent = true;
+        this.winner = this.findPlayer("Winner", rawData);
+        this.loser = this.findPlayer("Loser", rawData);
     }
 }
 

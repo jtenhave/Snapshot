@@ -25,6 +25,18 @@ describe("Team", () => {
         }); 
     });
 
+    describe("findPlayer()", () => {
+        it("Finds player", () => {
+            const teamData = samples.finishedGameData.liveData.boxscore.teams.away;
+            const team = new Team(teamData);
+
+            const player = team.findPlayer("8473507");
+
+            assert.strictEqual(player !== undefined, true);
+            assert.strictEqual(player.name, "Jeff Petry");
+        });
+    });
+
     describe("toJSON()", () => {
         it("Returns correct JSON", () => {
             const teamData = samples.finishedGameData.liveData.boxscore.teams.away;          

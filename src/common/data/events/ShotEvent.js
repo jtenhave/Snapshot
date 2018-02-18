@@ -8,7 +8,8 @@ class ShotEvent extends Event {
     constructor(rawData) {
         super(rawData);
 
-        this.shooter = this.findPlayer("Shooter");
+        this.isInPlayEvent = true;
+        this.shooter = this.findPlayer("Shooter", rawData);
     }
 }
 

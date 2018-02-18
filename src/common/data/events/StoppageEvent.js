@@ -7,6 +7,8 @@ class StoppageEvent extends Event {
     
     constructor(rawData) {
         super(rawData);
+
+        this.isPlayStopEvent = true;
     }
 }
 

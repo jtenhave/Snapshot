@@ -7,6 +7,8 @@ class GiveawayEvent extends Event {
     
     constructor(rawData) {
         super(rawData);
+        
+        this.isInPlayEvent = true;
     }
 }
 

@@ -31,7 +31,7 @@ describe("Event", () => {
             const rawEvent = samples.finishedGameData.liveData.plays.allPlays[60];
             const event = new Event(rawEvent);
 
-            const player = event.findPlayer("Scorer");
+            const player = event.findPlayer("Scorer", rawEvent);
 
             assert.strictEqual(player, "8469506");
         });
@@ -42,7 +42,7 @@ describe("Event", () => {
             const rawEvent = samples.finishedGameData.liveData.plays.allPlays[60];
             const event = new Event(rawEvent);
 
-            const players = event.findPlayers("Assist");
+            const players = event.findPlayers("Assist", rawEvent);
 
             assert.deepEqual(players, ["8476495"]);
         });

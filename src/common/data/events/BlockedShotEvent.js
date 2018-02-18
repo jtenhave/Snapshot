@@ -8,8 +8,9 @@ class BlockedShotEvent extends Event {
     constructor(rawData) {
         super(rawData);
 
-        this.shooter = this.findPlayer("Shooter");
-        this.blocker = this.findPlayer("Blocker");
+        this.isInPlayEvent = true;
+        this.shooter = this.findPlayer("Shooter", rawData);
+        this.blocker = this.findPlayer("Blocker", rawData);
     }
 }
 

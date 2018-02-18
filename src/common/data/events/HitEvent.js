@@ -8,8 +8,9 @@ class HitEvent extends Event {
     constructor(rawData) {
         super(rawData);
 
-        this.hitter = this.findPlayer("Hitter");
-        this.hittee = this.findPlayer("Hittee");
+        this.isInPlayEvent = true;
+        this.hitter = this.findPlayer("Hitter", rawData);
+        this.hittee = this.findPlayer("Hittee", rawData);
     }
 }
 

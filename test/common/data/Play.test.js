@@ -1,11 +1,12 @@
 const assert = require("assert");
+const Event = require("../../../src/common/data/events/Event");
 const samples = require ("../../samples/gameData");
 const Play = require("../../../src/common/data/Play.js");
 
 describe("Play", () => {
     describe("start()", () => {
         it("Sets play start properties", () => {
-            const event = samples.finishedGameData.liveData.plays.allPlays[8];
+            const event = new Event(samples.finishedGameData.liveData.plays.allPlays[8]);
 
             const play = Play.start(event);
 
@@ -17,19 +18,21 @@ describe("Play", () => {
 
     describe("stop()", () => {
         it("Sets play end properties", () => {
-            const startEvent = samples.finishedGameData.liveData.plays.allPlays[8];
-            const stopEvent = samples.finishedGameData.liveData.plays.allPlays[10];
+            const startEvent = new Event(samples.finishedGameData.liveData.plays.allPlays[8]);
+            const stopEvent = new Event(samples.finishedGameData.liveData.plays.allPlays[10]);
+
             const play = Play.start(startEvent);
 
             play.stop(stopEvent, true);
 
             assert.strictEqual(play.end, 56);
             assert.strictEqual(play.endTimestamp, 1507245206000);
+            assert.strictEqual(play.finished, true);
         });
 
         it("Adjusts play start timestamp", () => {
-            const startEvent = samples.finishedGameData.liveData.plays.allPlays[8];
-            const stopEvent = samples.finishedGameData.liveData.plays.allPlays[10];
+            const startEvent = new Event(samples.finishedGameData.liveData.plays.allPlays[8]);
+            const stopEvent = new Event(samples.finishedGameData.liveData.plays.allPlays[10]);
             const play = Play.start(startEvent);
 
             play.stop(stopEvent, true);

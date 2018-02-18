@@ -8,8 +8,9 @@ class GoalEvent extends Event {
     constructor(rawData) {
         super(rawData);
 
-        this.scorer = this.findPlayer("Scorer");
-        this.assistants = this.findPlayers("Assist");
+        this.isPlayStopEvent = true;
+        this.scorer = this.findPlayer("Scorer", rawData);
+        this.assistants = this.findPlayers("Assist", rawData);
     }
 }
 

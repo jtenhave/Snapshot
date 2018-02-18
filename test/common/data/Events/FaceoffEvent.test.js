@@ -9,6 +9,7 @@ describe("FaceoffEvent", () => {
 
             const event = new FaceoffEvent(rawEvent);
 
+            assert.strictEqual(event.isPlayStartEvent, true);
             assert.strictEqual(event.period, 1);
             assert.strictEqual(event.winner, "8469521");
             assert.strictEqual(event.loser, "8478403");

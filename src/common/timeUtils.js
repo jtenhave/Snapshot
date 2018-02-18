@@ -5,7 +5,7 @@ const PERIOD_LEN = 1200;
  * Convert a time string in format "mm:SS" to a number of seconds.
  */
 function toPeriodTime(time, reverse) {
-	if (time === "END") {
+	if (time === "END" || time == "Final") {
 		return PERIOD_LEN;
 	}
 

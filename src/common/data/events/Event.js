@@ -34,7 +34,7 @@ Event.create = function (rawData) {
         case "Hit":
             return new HitEvent(rawData);
         default:
-            throw new Error(`Could not create event from type ${rawData.result.event}`);
+            return undefined;
     }
 }
 
