@@ -13,7 +13,7 @@ class PolledData {
      */
     addValue(time, value) {
         const count = this.values.length;
-        if (count && this.values[count - 1] === value) {
+        if (value == undefined || (count && this.values[count - 1] >= value)) {
             return;
         }
 

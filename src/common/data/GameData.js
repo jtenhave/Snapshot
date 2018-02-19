@@ -16,9 +16,9 @@ class GameData {
     constructor(rawData) {
         this.plays = [];
         if (rawData) {
-            this._id = rawData.gamePk.toString();
+            this.id = rawData.gamePk.toString();
             this.playoffs = rawData.gameData.game.type === "P";
-            this.time = timeUtils.toTotalTime(rawData.liveData.linescore.currentPeriodTimeRemaining, rawData.liveData.linescore.currentPeriod - 1, true);
+            this.time = this.parseTotalTime(rawData);
             this.finished = this.isFinished(rawData);
             this.parseTeamData(rawData);
             this.parseGameEvents(rawData);
@@ -46,7 +46,7 @@ class GameData {
             return;
         }
 
-        const team = this.teams[event.team];
+        const team = this.findTeam(event.team);
         const lastPlay = this.plays.length ? this.plays[this.plays.length - 1] : undefined;
         const inPlay = lastPlay ? !lastPlay.finished : false;
         
@@ -104,29 +104,47 @@ class GameData {
      * Parses team data from raw NHL API data.
      */
     parseTeamData(rawData) {
-        this.teams = {};
+        this.teams = [];
         const away = new Team(rawData.liveData.boxscore.teams.away);
         const home = new Team(rawData.liveData.boxscore.teams.home);
         home.opposition = away;
         away.opposition = home;
 
-        this.teams[away.id] = away;
-        this.teams[home.id] = home;
+        this.teams.push(away);
+        this.teams.push(home);
+    }
+
+    /**
+     * Parse the total elapsed time in the game.
+     */
+    parseTotalTime(rawData) {
+        const period = rawData.liveData.linescore.currentPeriod;
+        let time = rawData.liveData.linescore.currentPeriodTimeRemaining;
+        
+        if (time === "END" || time == "Final") {
+            time = "0:00";
+        }
+    
+        if (time == undefined) {
+            time = "20:00";
+        }
+
+        return timeUtils.toTotalTime(time, period - 1, true);
     }
 
     /**
      * Merge this data object with another one. This only applies to polled data.
      */
-    merge(gameData) {
-        
-        for (const teamId of Object.keys(this.teams)) {
+    merge(gameData) { 
+        for (const team of this.teams) {
+            const teamSource = gameData.findTeam(team.id);
             // Merge player data.
-            for (const player of this.teams[teamId].players) {    
-                var playerSource = gameData.teams[teamId].findPlayer(player.id);
+            for (const player of team.players) {    
+                var playerSource = teamSource.findPlayer(player.id);
 
                 // Merge TOI.
                 player.tois = playerSource.tois;
-                player.tois.addValue(this.time, player.toi)
+                player.tois.addValue(this.time, player.toi);
             }
         }
     }
@@ -153,14 +171,35 @@ class GameData {
     }
 
     /**
+     * Returns the team matching the given id.
+     */
+    findTeam(id) {
+        return this.teams.find(t => t.id === id);
+    }
+
+    /**
      * Converts game data to minified json.
      */
     toJSON() {
         return {
-            _id: this._id,
-            plays: this.plays.map(p => p.toJSON()),
-            teams: Object.keys(this.teams).map(k => this.teams[k].toJSON())
+            _id: this.id,
+            p: this.plays.map(p => p.toJSON()),
+            t: this.teams.map(t => t.toJSON()),
+            po: this.playoffs
         }
+    }
+
+    /**
+     * Creates a GameData from a minified JSON object.
+     */
+    static fromJSON(json) {
+        const gameData = new GameData();
+        gameData.id = json._id;
+        gameData.plays = json.p.map(p => Play.fromJSON(p));
+        gameData.teams = json.t.map(t => Team.fromJSON(t));
+        gameData.playoffs = json.po;
+
+        return gameData;
     }
 }
 

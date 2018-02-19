@@ -21,7 +21,7 @@ class Player {
             this.name = rawData.person.fullName;
 
             if (rawData.stats.skaterStats) {
-                this.toi = timeUtils.toPeriodTime(rawData.stats.skaterStats.timeOnIce);
+                this.toi = timeUtils.toSeconds(rawData.stats.skaterStats.timeOnIce);
             }   
         } 
     }

@@ -13,7 +13,7 @@ describe("GameData", () => {
         it("Initializes GameData", () => {
             const gameData = new GameData(samples.inProgressGameData);
 
-            assert.strictEqual(gameData._id, "2017020445");
+            assert.strictEqual(gameData.id, "2017020445");
             assert.strictEqual(gameData.playoffs, false);
             assert.strictEqual(gameData.time, 3072);
             assert.strictEqual(gameData.teams !== undefined, true);
@@ -27,12 +27,13 @@ describe("GameData", () => {
 
             gameData.parseTeamData(samples.inProgressGameData);
 
-            assert.strictEqual(gameData.teams["MTL"] !== undefined, true);
-            assert.strictEqual(gameData.teams["EDM"] !== undefined, true);
-            assert.strictEqual(gameData.teams["MTL"].id, "MTL");
-            assert.strictEqual(gameData.teams["EDM"].id, "EDM");
-            assert.strictEqual(gameData.teams["MTL"].opposition, gameData.teams["EDM"]);
-            assert.strictEqual(gameData.teams["EDM"].opposition, gameData.teams["MTL"]);
+            const teamA = gameData.findTeam("MTL");
+            const teamB = gameData.findTeam("EDM");
+
+            assert.strictEqual(teamA !== undefined, true);
+            assert.strictEqual(teamB !== undefined, true);
+            assert.strictEqual(teamA.opposition, teamB);
+            assert.strictEqual(teamB.opposition, teamA);
         });
     });
 
@@ -105,7 +106,7 @@ describe("GameData", () => {
 
             gameData.parseEvent(event);
 
-            const player = gameData.teams["MTL"].findPlayer("8469521");
+            const player = gameData.findTeam("MTL").findPlayer("8469521");
             assert.strictEqual(player.shots.times.length === 1, true);
             assert.strictEqual(player.shots.times[0], event.totalTime);
         });
@@ -117,8 +118,8 @@ describe("GameData", () => {
 
             gameData.parseEvent(event);
 
-            const scorer = gameData.teams["BUF"].findPlayer("8469506");
-            const assist = gameData.teams["BUF"].findPlayer("8476495");
+            const scorer = gameData.findTeam("BUF").findPlayer("8469506");
+            const assist = gameData.findTeam("BUF").findPlayer("8476495");
             assert.strictEqual(scorer.shots.times.length === 1, true);
             assert.strictEqual(scorer.shots.times[0], event.totalTime);
             assert.strictEqual(scorer.goals.times.length === 1, true);
@@ -134,8 +135,8 @@ describe("GameData", () => {
 
             gameData.parseEvent(event);
 
-            const winner = gameData.teams["MTL"].findPlayer("8469521");
-            const loser = gameData.teams["BUF"].findPlayer("8478403");
+            const winner = gameData.findTeam("MTL").findPlayer("8469521");
+            const loser = gameData.findTeam("BUF").findPlayer("8478403");
             assert.strictEqual(winner.faceoffWin.times.length === 1, true);
             assert.strictEqual(winner.faceoffWin.times[0], event.totalTime);
             assert.strictEqual(loser.faceoffLoss.times.length === 1, true);
@@ -149,7 +150,7 @@ describe("GameData", () => {
 
             gameData.parseEvent(event);
 
-            const player = gameData.teams["MTL"].findPlayer("8470642");
+            const player = gameData.findTeam("MTL").findPlayer("8470642");
             assert.strictEqual(player.hits.times.length === 1, true);
             assert.strictEqual(player.hits.times[0], event.totalTime);
         });
@@ -159,23 +160,101 @@ describe("GameData", () => {
         it("Merges TOI properly", () => {
             const gameDataA = new GameData();
             const gameDataB = new GameData();
+            const gameDataC = new GameData();
             gameDataA.parseTeamData(samples.finishedGameData);
             gameDataB.parseTeamData(samples.finishedGameData);
-            const playerA = gameDataA.teams["MTL"].findPlayer("8470642");
+            gameDataC.parseTeamData(samples.finishedGameData)
+            const playerA = gameDataA.findTeam("MTL").findPlayer("8470642");
             playerA.tois.addValue(600, 300);
-            const playerB = gameDataB.teams["MTL"].findPlayer("8470642");
+            const playerB = gameDataB.findTeam("MTL").findPlayer("8470642");
             playerB.toi = 500;
+            const playerC = gameDataC.findTeam("MTL").findPlayer("8470642");
+            playerC.toi = 600;
             gameDataB.time = 900;
+            gameDataC.time = 1000;
 
             gameDataB.merge(gameDataA);
+            gameDataC.merge(gameDataB);
 
-            assert.strictEqual(playerB.tois.times.length === 2, true);
-            assert.strictEqual(playerB.tois.values.length === 2, true);
-            assert.strictEqual(playerB.tois.times[0], 600);
-            assert.strictEqual(playerB.tois.times[1], 900);
-            assert.strictEqual(playerB.tois.values[0], 300);
-            assert.strictEqual(playerB.tois.values[1], 500);
+            assert.strictEqual(playerC.tois.times.length === 3, true);
+            assert.strictEqual(playerC.tois.values.length === 3, true);
+            assert.strictEqual(playerC.tois.times[0], 600);
+            assert.strictEqual(playerC.tois.times[1], 900);
+            assert.strictEqual(playerC.tois.times[2], 1000);
+            assert.strictEqual(playerC.tois.values[0], 300);
+            assert.strictEqual(playerC.tois.values[1], 500);
+            assert.strictEqual(playerC.tois.values[2], 600);
         });
+     });
+
+     describe("parseTotalTime()", () => {
+        it("Returns correct value when period", () => {
+            const gameData = new GameData();
+            gameData.playoffs = false;
+            const rawData = {
+                liveData: {
+                    linescore: {
+                        currentPeriod: 2,
+                        currentPeriodTimeRemaining: "15:34"
+                    }
+                }
+            }
+
+            const result = gameData.parseTotalTime(rawData);
+
+            assert.strictEqual(result, 1466);
+        });
+
+        it("Returns correct value when period is 'END'", () => {
+            const gameData = new GameData();
+            gameData.playoffs = false;
+            const rawData = {
+                liveData: {
+                    linescore: {
+                        currentPeriod: 1,
+                        currentPeriodTimeRemaining: "END"
+                    }
+                }
+            }
+
+            const result = gameData.parseTotalTime(rawData);
+
+            assert.strictEqual(result, 1200);
+        });
+
+        it("Returns correct value when period is 'Final'", () => {
+            const gameData = new GameData();
+            gameData.playoffs = false;
+            const rawData = {
+                liveData: {
+                    linescore: {
+                        currentPeriod: 3,
+                        currentPeriodTimeRemaining: "Final"
+                    }
+                }
+            }
+
+            const result = gameData.parseTotalTime(rawData);
+
+            assert.strictEqual(result, 3600);
+        });
+
+        it("Returns correct value when period is undefined", () => {
+            const gameData = new GameData();
+            gameData.playoffs = false;
+            const rawData = {
+                liveData: {
+                    linescore: {
+                        currentPeriod: 4
+                    }
+                }
+            }
+
+            const result = gameData.parseTotalTime(rawData);
+
+            assert.strictEqual(result, 3600);
+        });
+
      });
 
      describe("isFinished()", () => {
@@ -222,86 +301,4 @@ describe("GameData", () => {
             assert.strictEqual(finished, true);
         });
      });
-
-    /*describe("parseGameEvents()", () => {
-        it("Play is initiated by a play events", function() {
-            const playEvents = samples.finishedGameData.liveData.plays.allPlays
-                .filter(e => GameData.isPlay(e));
-
-            const gameData = new GameData();
-            gameData.playoffs = false;
-            gameData.parseGameEvents(samples.finishedGameData);
-    
-            assert.strictEqual(gameData.plays.length, playEvents.length);
-            for (var i = 0; i < gameData.plays.length; i++) {
-                assert.strictEqual(gameData.plays[i].start, timeUtils.toSeconds(playEvents[i].about.periodTime));
-            }
-        });
-
-        it("Play stopped by play events if play is in progress", function() {
-            const abruptStoppageEvents = [];
-            const allEvents = samples.finishedGameData.liveData.plays.allPlays;
-            let inPlay = false;
-            for (let i = 0; i < allEvents.length; i++) {
-                const event = allEvents[i];
-                if (event.about.period >= 5) {
-                    break;
-                }
-
-                if (GameData.isPlay(event) && inPlay) {
-                    abruptStoppageEvents.push(event);
-                    inPlay = false;
-                }
-
-                if (GameData.isStoppage(event)) {
-                    inPlay = false;
-                }
-
-                if (!inPlay && GameData.isPlay(event)) {
-                    inPlay = true;
-                }
-            }
-
-            const gameData = new GameData();
-            gameData.playoffs = false;
-            gameData.parseGameEvents(samples.finishedGameData);
-            const plays = gameData.plays.filter(e => !e.hasStoppage);
-
-            assert.strictEqual(plays.length, abruptStoppageEvents.length);
-            for (var i = 0; i < plays.length; i++) {
-                assert.strictEqual(plays[i].end, timeUtils.toSeconds(abruptStoppageEvents[i].about.periodTime)); 
-            }
-        });
-
-        it("Play stopped by stoppage events", function() {
-            const stoppageEvents = [];
-            const allEvents = samples.finishedGameData.liveData.plays.allPlays;
-            let inPlay = false;
-            for (let i = 0; i < allEvents.length; i++) {
-                const event = allEvents[i];
-                if (event.about.period >= 5) {
-                    break;
-                }
-
-                if (GameData.isStoppage(event)) {
-                    inPlay = false;
-                    stoppageEvents.push(event);
-                }
-
-                if (GameData.isPlay(event)) {
-                    inPlay = true;
-                }
-            }
-
-            const gameData = new GameData();
-            gameData.playoffs = false;
-            gameData.parseGameEvents(samples.finishedGameData);
-            const plays = gameData.plays.filter(e => e.hasStoppage);
-
-            assert.strictEqual(plays.length, stoppageEvents.length);
-            for (var i = 0; i < plays.length; i++) {
-                assert.strictEqual(plays[i].end, timeUtils.toSeconds(stoppageEvents[i].about.periodTime)); 
-            }
-        });
-    });*/
 });

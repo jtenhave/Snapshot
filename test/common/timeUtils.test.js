@@ -2,6 +2,14 @@ var assert = require("assert");
 var timeUtils = require("../../src/common/timeUtils");
 
 describe("timeUtils", function() {
+    describe("toSeconds()", function() {
+        it("Returns correct value", function() {       
+            const result = timeUtils.toPeriodTime("24:32");
+
+            assert.strictEqual(result, 1472);
+        });
+    });
+    
     describe("toPeriodTime()", function() {
         it("Returns correct value for normal period time", function() {       
             const result = timeUtils.toPeriodTime("13:32");
