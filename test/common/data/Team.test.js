@@ -66,5 +66,17 @@ describe("Team", () => {
             assert.strictEqual(team.players[0].name, "playerA");
             assert.strictEqual(team.players[1].name, "playerB");
         });
+
+        it("Does not parse players in short mode.", () => {
+            const json = {
+                n: "habs",
+                p: [{ n: "playerA"}, { n: "playerB"}]
+            };
+
+            const team = Team.fromJSON(json, true);
+
+            assert.strictEqual(team.name, json.n);
+            assert.strictEqual(team.players, undefined);
+        });
     });
 });

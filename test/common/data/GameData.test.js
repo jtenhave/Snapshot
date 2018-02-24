@@ -1,5 +1,6 @@
 const assert = require("assert");
-const samples = require ("../../samples/gameData");
+const gameSamples = require ("../../samples/gameData");
+const scheduleSamples = require ("../../samples/scheduleData");
 const timeUtils = require("../../../src/common/timeUtils");
 const HitEvent = require("../../../src/common/data/events/HitEvent");
 const FaceoffEvent = require("../../../src/common/data/events/FaceoffEvent");
@@ -10,14 +11,30 @@ const GameData = require("../../../src/common/data/GameData");
 
 describe("GameData", () => {
     describe("constructor()", () => {
-        it("Initializes GameData", () => {
-            const gameData = new GameData(samples.inProgressGameData);
+        it("Initializes GameData from live endpoint", () => {
+            const gameData = new GameData(gameSamples.inProgressGameData);
 
             assert.strictEqual(gameData.id, "2017020445");
             assert.strictEqual(gameData.playoffs, false);
             assert.strictEqual(gameData.time, 3072);
-            assert.strictEqual(gameData.teams !== undefined, true);
+            assert.notStrictEqual(gameData.teams, undefined);
+            assert.notStrictEqual(gameData.teams.home, undefined);
+            assert.notStrictEqual(gameData.teams.away, undefined);
+            assert.notStrictEqual(gameData.plays, undefined);
             assert.strictEqual(gameData.started, true);
+            assert.strictEqual(gameData.finished, false);
+        });
+
+        it("Initializes GameData from schedule endpoint", () => {
+            const gameData = new GameData(scheduleSamples.multiGames.dates[0].games[0]);
+
+            assert.strictEqual(gameData.id, "2017020614");
+            assert.strictEqual(gameData.playoffs, false);
+            assert.notStrictEqual(gameData.teams, undefined);
+            assert.notStrictEqual(gameData.teams.home, undefined);
+            assert.notStrictEqual(gameData.teams.away, undefined);
+            assert.strictEqual(gameData.started, false);
+            assert.strictEqual(gameData.started, false);
         });
     });
 
@@ -25,7 +42,7 @@ describe("GameData", () => {
         it("Correctly parses team data", () => {
             const gameData = new GameData();
 
-            gameData.parseTeamData(samples.inProgressGameData);
+            gameData.parseTeamData(gameSamples.inProgressGameData);
 
             const teamA = gameData.findTeam("MTL");
             const teamB = gameData.findTeam("EDM");
@@ -39,9 +56,10 @@ describe("GameData", () => {
 
     describe("parseEvent()", () => {
         it("Faceoff event starts play", () => {
-            const event = new FaceoffEvent(samples.finishedGameData.liveData.plays.allPlays[3]);
+            const event = new FaceoffEvent(gameSamples.finishedGameData.liveData.plays.allPlays[3]);
             const gameData = new GameData();
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.plays = [];
+            gameData.parseTeamData(gameSamples.finishedGameData);
 
             gameData.parseEvent(event);
 
@@ -50,9 +68,10 @@ describe("GameData", () => {
         });
 
         it("In-play event starts play if not started", () => {
-            const event = new HitEvent(samples.finishedGameData.liveData.plays.allPlays[13]);
+            const event = new HitEvent(gameSamples.finishedGameData.liveData.plays.allPlays[13]);
             const gameData = new GameData();
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.plays = [];
+            gameData.parseTeamData(gameSamples.finishedGameData);
 
             gameData.parseEvent(event);
 
@@ -61,10 +80,11 @@ describe("GameData", () => {
         });
 
         it("In-play event does not start play if last event has same timestamp", () => {
-            const event = new HitEvent(samples.finishedGameData.liveData.plays.allPlays[13]);
+            const event = new HitEvent(gameSamples.finishedGameData.liveData.plays.allPlays[13]);
             const gameData = new GameData();
+            gameData.plays = [];
             const play =  { finished: true, end: event.periodTime };
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.parseTeamData(gameSamples.finishedGameData);
             gameData.plays.push(play);
 
             gameData.parseEvent(event);
@@ -74,11 +94,12 @@ describe("GameData", () => {
         });
 
         it("Stoppage event stops a play", () => {
-            const event = new StoppageEvent(samples.finishedGameData.liveData.plays.allPlays[120]);
+            const event = new StoppageEvent(gameSamples.finishedGameData.liveData.plays.allPlays[120]);
             const gameData = new GameData();
+            gameData.plays = [];
             let stopped = false;
             const play = { stop: d => { if (d === event) { stopped = true } } };
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.parseTeamData(gameSamples.finishedGameData);
             gameData.plays.push(play);
 
             gameData.parseEvent(event);
@@ -87,11 +108,12 @@ describe("GameData", () => {
         });
 
         it("Faceoff event stops a play", () => {
-            const event = new FaceoffEvent(samples.finishedGameData.liveData.plays.allPlays[3]);
+            const event = new FaceoffEvent(gameSamples.finishedGameData.liveData.plays.allPlays[3]);
             const gameData = new GameData();
+            gameData.plays = [];
             let stopped = false;
             const play = { stop: d => { if (d === event) { stopped = true } } };
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.parseTeamData(gameSamples.finishedGameData);
             gameData.plays.push(play);
 
             gameData.parseEvent(event);
@@ -100,9 +122,10 @@ describe("GameData", () => {
         });
 
         it("Shot event parsed properly", () => {
-            const event = new ShotEvent(samples.finishedGameData.liveData.plays.allPlays[4]);
+            const event = new ShotEvent(gameSamples.finishedGameData.liveData.plays.allPlays[4]);
             const gameData = new GameData();
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.plays = [];
+            gameData.parseTeamData(gameSamples.finishedGameData);
 
             gameData.parseEvent(event);
 
@@ -112,9 +135,10 @@ describe("GameData", () => {
         });
 
         it("Goal event parsed properly", () => {
-            const event = new GoalEvent(samples.finishedGameData.liveData.plays.allPlays[60]);
+            const event = new GoalEvent(gameSamples.finishedGameData.liveData.plays.allPlays[60]);
             const gameData = new GameData();
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.plays = [];
+            gameData.parseTeamData(gameSamples.finishedGameData);
 
             gameData.parseEvent(event);
 
@@ -129,9 +153,10 @@ describe("GameData", () => {
         });
 
         it("Faceoff event parsed properly", () => {
-            const event = new FaceoffEvent(samples.finishedGameData.liveData.plays.allPlays[3]);
+            const event = new FaceoffEvent(gameSamples.finishedGameData.liveData.plays.allPlays[3]);
             const gameData = new GameData();
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.plays = [];
+            gameData.parseTeamData(gameSamples.finishedGameData);
 
             gameData.parseEvent(event);
 
@@ -144,9 +169,10 @@ describe("GameData", () => {
         });
 
         it("Hit event parsed properly", () => {
-            const event = new HitEvent(samples.finishedGameData.liveData.plays.allPlays[13]);
+            const event = new HitEvent(gameSamples.finishedGameData.liveData.plays.allPlays[13]);
             const gameData = new GameData();
-            gameData.parseTeamData(samples.finishedGameData);
+            gameData.plays = [];
+            gameData.parseTeamData(gameSamples.finishedGameData);
 
             gameData.parseEvent(event);
 
@@ -161,9 +187,9 @@ describe("GameData", () => {
             const gameDataA = new GameData();
             const gameDataB = new GameData();
             const gameDataC = new GameData();
-            gameDataA.parseTeamData(samples.finishedGameData);
-            gameDataB.parseTeamData(samples.finishedGameData);
-            gameDataC.parseTeamData(samples.finishedGameData)
+            gameDataA.parseTeamData(gameSamples.finishedGameData);
+            gameDataB.parseTeamData(gameSamples.finishedGameData);
+            gameDataC.parseTeamData(gameSamples.finishedGameData)
             const playerA = gameDataA.findTeam("MTL").findPlayer("8470642");
             playerA.tois.addValue(600, 300);
             const playerB = gameDataB.findTeam("MTL").findPlayer("8470642");
@@ -185,9 +211,9 @@ describe("GameData", () => {
             assert.strictEqual(playerC.tois.values[1], 500);
             assert.strictEqual(playerC.tois.values[2], 600);
         });
-     });
+    });
 
-     describe("parseTotalTime()", () => {
+    describe("parseTotalTime()", () => {
         it("Returns correct value when period", () => {
             const gameData = new GameData();
             gameData.playoffs = false;
@@ -255,20 +281,20 @@ describe("GameData", () => {
             assert.strictEqual(result, 3600);
         });
 
-     });
+    });
 
-     describe("isFinished()", () => {
+    describe("isFinished()", () => {
         it("Returns false for not finished status code", () => {
             const gameData = new GameData();
 
-            const finished = gameData.isFinished(samples.inProgressGameData);
+            const finished = gameData.isFinished(gameSamples.inProgressGameData);
 
             assert.strictEqual(finished, false);
         });
 
         it("Returns false if status code indicates finished but game not over", () => {
             const gameData = new GameData();
-            const rawData = JSON.parse(JSON.stringify(samples.inProgressGameData));
+            const rawData = JSON.parse(JSON.stringify(gameSamples.inProgressGameData));
             rawData.gameData.status.statusCode = "7";
             gameData.time = 3599;
 
@@ -279,7 +305,7 @@ describe("GameData", () => {
 
         it("Returns false if status code indicates finished and no winner", () => {
             const gameData = new GameData();
-            const rawData = JSON.parse(JSON.stringify(samples.inProgressGameData));
+            const rawData = JSON.parse(JSON.stringify(gameSamples.inProgressGameData));
             rawData.gameData.status.statusCode = "7";
             gameData.time = 3601;
             rawData.liveData.linescore.teams.away.goals = 2
@@ -292,7 +318,7 @@ describe("GameData", () => {
 
         it("Returns true if there is a winner", () => {
             const gameData = new GameData();
-            const rawData = JSON.parse(JSON.stringify(samples.inProgressGameData));
+            const rawData = JSON.parse(JSON.stringify(gameSamples.inProgressGameData));
             rawData.gameData.status.statusCode = "7";
             gameData.time = 3601;
 
@@ -300,5 +326,58 @@ describe("GameData", () => {
 
             assert.strictEqual(finished, true);
         });
-     });
+    });
+
+    describe("toJSON()", () => {
+        it("Returns correct JSON", () => {
+            const gameData = new GameData(gameSamples.inProgressGameData);
+            
+            const json = gameData.toJSON();
+
+            assert.strictEqual(json._id, "2017020445");
+            assert.strictEqual(json.po, false);
+            assert.notStrictEqual(json.t, undefined);
+            assert.notStrictEqual(json.t.a, undefined);
+            assert.notStrictEqual(json.t.h, undefined);
+            assert.strictEqual(json.p.length, gameData.plays.length);
+            assert.strictEqual(json.s, true);
+            assert.strictEqual(json.f, false);
+        });
+    });
+
+    describe("fromJSON()", () => {
+        it("Returns correct GameData", () => {
+            const initialGameData = new GameData(gameSamples.inProgressGameData);
+            const json = initialGameData.toJSON();
+
+            const parsedGameData = GameData.fromJSON(json);
+
+            assert.strictEqual(parsedGameData.id, "2017020445");
+            assert.strictEqual(parsedGameData.playoffs, false);
+            assert.notStrictEqual(parsedGameData.teams, undefined);
+            assert.notStrictEqual(parsedGameData.teams.home, undefined);
+            assert.notStrictEqual(parsedGameData.teams.away, undefined);
+            assert.notStrictEqual(parsedGameData.plays, undefined);
+            assert.strictEqual(parsedGameData.started, true);
+            assert.strictEqual(parsedGameData.finished, false);
+        });
+
+        it("Does not parse play in short mode", () => {
+            const initialGameData = new GameData(gameSamples.inProgressGameData);
+            const json = initialGameData.toJSON();
+
+            const parsedGameData = GameData.fromJSON(json, true);
+
+            assert.strictEqual(parsedGameData.id, "2017020445");
+            assert.strictEqual(parsedGameData.playoffs, false);
+            assert.notStrictEqual(parsedGameData.teams, undefined);
+            assert.notStrictEqual(parsedGameData.teams.home, undefined);
+            assert.notStrictEqual(parsedGameData.teams.away, undefined);
+            assert.strictEqual(parsedGameData.teams.away.players, undefined);
+            assert.strictEqual(parsedGameData.teams.home.players, undefined);
+            assert.strictEqual(parsedGameData.plays, undefined);
+            assert.strictEqual(parsedGameData.started, true);
+            assert.strictEqual(parsedGameData.finished, false);
+        });
+    });
 });

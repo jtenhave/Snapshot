@@ -14,21 +14,47 @@ const timeUtils = require("../timeUtils");
 class GameData {
 
     constructor(rawData) {
-        this.plays = [];
         if (rawData) {
-            this.id = rawData.gamePk.toString();
-            this.playoffs = rawData.gameData.game.type === "P";
-            this.time = this.parseTotalTime(rawData);
-            this.finished = this.isFinished(rawData);
-            this.parseTeamData(rawData);
-            this.parseGameEvents(rawData);
+            if (rawData.gameData) {
+                this.parseFromLiveData(rawData);
+            } else {
+                this.parseFromScheduleData(rawData);
+            }
         }    
+    }
+
+    /**
+     * Parses raw NHL API game data from a the schedule endpoint.
+     */
+    parseFromScheduleData(rawData) {
+        this.id = rawData.gamePk.toString();
+        this.date = new Date(rawData.gameDate);
+        this.playoffs = rawData.gameType === "P";
+        this.finished = false;
+        this.started = false;
+        this.teams = {};
+        this.teams.away = new Team(rawData.teams.away);
+        this.teams.home = new Team(rawData.teams.home);
+    }
+
+    /**
+     * Parses raw NHL API game data from a the live endpoint.
+     */
+    parseFromLiveData(rawData) {
+        this.id = rawData.gamePk.toString();
+        this.date = new Date(rawData.gameData.datetime.datetime);
+        this.playoffs = rawData.gameData.game.type === "P";
+        this.time = this.parseTotalTime(rawData);
+        this.finished = this.isFinished(rawData);
+        this.parseTeamData(rawData);
+        this.parseGameEvents(rawData);
     }
 
     /**
      * Parses events from raw NHL API data.
      */
     parseGameEvents(rawData) {
+        this.plays = [];
         const allEvents = rawData.liveData.plays.allPlays.map(p => Event.create(p)).filter(e => e);
         for (let event of allEvents) {
             this.parseEvent(event);
@@ -104,14 +130,11 @@ class GameData {
      * Parses team data from raw NHL API data.
      */
     parseTeamData(rawData) {
-        this.teams = [];
-        const away = new Team(rawData.liveData.boxscore.teams.away);
-        const home = new Team(rawData.liveData.boxscore.teams.home);
-        home.opposition = away;
-        away.opposition = home;
-
-        this.teams.push(away);
-        this.teams.push(home);
+        this.teams = {};
+        this.teams.away = new Team(rawData.liveData.boxscore.teams.away);
+        this.teams.home = new Team(rawData.liveData.boxscore.teams.home);
+        this.teams.home.opposition = this.teams.away;
+        this.teams.away.opposition = this.teams.home;
     }
 
     /**
@@ -136,7 +159,7 @@ class GameData {
      * Merge this data object with another one. This only applies to polled data.
      */
     merge(gameData) { 
-        for (const team of this.teams) {
+        for (const team of [this.teams.away, this.teams.home]) {
             const teamSource = gameData.findTeam(team.id);
             // Merge player data.
             for (const player of team.players) {    
@@ -174,33 +197,47 @@ class GameData {
      * Returns the team matching the given id.
      */
     findTeam(id) {
-        return this.teams.find(t => t.id === id);
+        return this.teams.away.id === id ? this.teams.away : this.teams.home;
     }
 
     /**
      * Converts game data to minified json.
      */
     toJSON() {
-        return {
+        const json = {
             _id: this.id,
-            p: this.plays.map(p => p.toJSON()),
-            t: this.teams.map(t => t.toJSON()),
-            po: this.playoffs
+            t: { a: this.teams.away.toJSON(), h: this.teams.home.toJSON() },
+            po: this.playoffs,
+            s: this.started,
+            f: this.finished
         }
+
+        if (this.plays) {
+            json.p = this.plays.map(p => p.toJSON());
+        }
+
+        return json;
     }
 
     /**
      * Creates a GameData from a minified JSON object.
      */
-    static fromJSON(json) {
+    static fromJSON(json, short) {
         const gameData = new GameData();
         gameData.id = json._id;
-        gameData.plays = json.p.map(p => Play.fromJSON(p));
-        gameData.teams = json.t.map(t => Team.fromJSON(t));
+        gameData.teams = { away: Team.fromJSON(json.t.a, short), home: Team.fromJSON(json.t.h, short) };
         gameData.playoffs = json.po;
+        gameData.started = json.s;
+        gameData.finished = json.f;
+
+        if (json.p && !short) {
+            gameData.plays = json.p.map(p => Play.fromJSON(p));
+        }
 
         return gameData;
     }
 }
 
-module.exports = GameData;
+if (typeof module !== "undefined" && module.exports) {
+	module.exports = GameData;
+}
