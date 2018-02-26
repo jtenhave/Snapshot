@@ -42,7 +42,7 @@ class GameData {
      */
     parseFromLiveData(rawData) {
         this.id = rawData.gamePk.toString();
-        this.date = new Date(rawData.gameData.datetime.datetime);
+        this.date = new Date(rawData.gameData.datetime.dateTime);
         this.playoffs = rawData.gameData.game.type === "P";
         this.time = this.parseTotalTime(rawData);
         this.finished = this.isFinished(rawData);
@@ -164,10 +164,11 @@ class GameData {
             // Merge player data.
             for (const player of team.players) {    
                 var playerSource = teamSource.findPlayer(player.id);
-
-                // Merge TOI.
-                player.tois = playerSource.tois;
-                player.tois.addValue(this.time, player.toi);
+                if (playerSource) {
+                    // Merge TOI.
+                    player.tois = playerSource.tois;
+                    player.tois.addValue(this.time, player.toi);
+                } 
             }
         }
     }
@@ -209,7 +210,8 @@ class GameData {
             t: { a: this.teams.away.toJSON(), h: this.teams.home.toJSON() },
             po: this.playoffs,
             s: this.started,
-            f: this.finished
+            f: this.finished,
+            d: this.date
         }
 
         if (this.plays) {
@@ -229,6 +231,7 @@ class GameData {
         gameData.playoffs = json.po;
         gameData.started = json.s;
         gameData.finished = json.f;
+        gameData.date = json.d
 
         if (json.p && !short) {
             gameData.plays = json.p.map(p => Play.fromJSON(p));

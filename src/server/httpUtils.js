@@ -1,20 +1,22 @@
-var http = require('http');
-var logger = require("./log")
+const http = require("http");
+const logger = require("./logUtils").logger;
+
+let debug = false;
 
 /**
  * Download JSON data from a URL.
  */
-module.exports.download = function download(url) {
+function download(url) {
 	return new Promise((resolve, reject) => {
 		http.get(url, resp => {
-			let data = '';
+			let data = "";
 		 
-			resp.on('data', chunk => {
+			resp.on("data", chunk => {
 				data += chunk;
 			});
 			 
-			resp.on('end', () => {
-				try {	
+			resp.on("end", () => {
+				try {
 					resolve(JSON.parse(data));
 				} catch(e) {
 					logger.error(`Failed to parse JSON: ${data}`);
@@ -27,3 +29,13 @@ module.exports.download = function download(url) {
 		});
 	});
 }
+
+/**
+ * Sets whether to debug or not.
+ */
+function setDebug(d) {
+	debug = d;
+}
+
+module.exports.download = download;
+module.exports.setDebug = setDebug;

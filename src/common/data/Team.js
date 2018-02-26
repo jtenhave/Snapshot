@@ -26,7 +26,9 @@ class Team {
      * Finds a player on a team given their ID.
      */
     findPlayer(id) {
-        return this.players.find(p => p.id === id);
+        if (this.players) {
+            return this.players.find(p => p.id === id);
+        }
     }
 
     /**
