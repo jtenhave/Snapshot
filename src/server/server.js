@@ -2,8 +2,8 @@ const express = require("express");
 const mongodb = require("mongodb");
 const nodeScheduler = require('node-schedule');
 
-const dateUtils = require("../common/dateUtils");
-const GameData = require("../common/data/GameData");
+const DateUtils = require("../common/DateUtils").DateUtils;
+const GameData = require("../common/data/GameData").GameData;
 const httpUtils = require("./httpUtils");
 const nhlAPIUtils = require("./nhlAPIUtils");
 const logUtils = require("./logUtils");
@@ -66,7 +66,7 @@ async function setupPollingScheduler(database) {
 
 	let games;
 	try {
-		games = await getScheduleForDay(database, dateUtils.formatShortDate(today));
+		games = await getScheduleForDay(database, DateUtils.formatShortDate(today));
 	} catch(e) {
 		logger.error(`Failed to download schedule for ${today}.`, e);
 	}
@@ -151,7 +151,7 @@ async function getScheduleForDay(database, dateString) {
 
 	// Don't insert anything if the download fails.
 	await scheduleCollection.insertOne({ _id: dateString, games: gameData.map(g => g.id) });
-	if (gameDataCollection.length) {
+	if (gameData.length) {
 		await gameDataCollection.insertMany(gameData.map(g => g.toJSON()));
 	}
 

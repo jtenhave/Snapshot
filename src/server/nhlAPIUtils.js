@@ -1,5 +1,5 @@
 const httpUtils = require("./httpUtils");
-const GameData = require("../common/data/GameData");
+const GameData = require("../common/data/GameData").GameData;
 
  /**
   * Downloads game data.

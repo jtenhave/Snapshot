@@ -4,10 +4,11 @@
   "description": "Displays stats for finished NHL games as if they were live.",
   "main": "index.js",
   "scripts": {
+    "build": "tsc -p src --outDir ./dist/common && cpy server/**/*.js ../dist --parents --cwd=src",
     "start-all": "npm run start-mongodb && npm run start-server",
-    "start-server": "node src/server/server.js",
+    "start-server": "node dist/server/server.js",
     "start-mongodb": "mkdirp data/mongodb && start mongod.exe --dbpath data/mongodb",
-    "test": "mocha test/**/*.test.js"
+    "test": "mocha -r ts-node/register src/**/*.test.ts"
   },
   "repository": {
     "type": "git",
@@ -23,13 +24,18 @@
     "express": "~4.16.2",
     "js-logging": "~0.1.0",
     "mongodb": "~2.2.33",
-    "node-schedule": "~1.2.5"
+    "node-schedule": "~1.2.5",
+    "requirejs": "~2.3.5"
   },
   "devDependencies": {
+    "@types/mocha": "2.2.48",
+    "cpy-cli": "1.0.1",
     "mkdirp": "0.5.1",
-    "mocha": "~4.0.1",
-    "rewire": "~3.0.2",
-    "websocket": "~1.0.24",
-    "xml2js-parser": "~1.1.1"
+    "mocha": "4.0.1",
+    "rewire": "3.0.2",
+    "ts-node": "5.0.0",
+    "typescript": "2.6.1",
+    "websocket": "1.0.24",
+    "xml2js-parser": "1.1.1"
   }
 }
