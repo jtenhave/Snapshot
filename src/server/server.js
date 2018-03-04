@@ -231,8 +231,9 @@ function setupExpress(database) {
 	});
 
 	// Setup static content for Snapshot site.
-	app.use(express.static("src/site"));
-	app.use(express.static("src/common"));
+	app.use(express.static("dist/site"));
+	app.use("/common", express.static("dist/common"));
+	app.use(express.static("dist/libs"));
 
 	return new Promise((resolve, reject) => {
 		// Start web server.

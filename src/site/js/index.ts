@@ -1,15 +1,18 @@
-const scheduleCache = new Map();
+import { DateUtils } from "../../common/DateUtils";
+import * as $ from "jquery";
+import * as restUtils from "./restUtils";
+import * as mustache from "mustache";
+import { GameData } from "common/data/GameData";
+
+const scheduleCache = new Map<string, GameData[]>();
 let lastDate;
 let scheduleRowTemplate;
 
-/**
- * Initialization to do when the page is loaded.
- */
-async function init() {
-	scheduleRowTemplate =  $("#schedule-table-row-template").html();
+$(document).ready(() => {
+    scheduleRowTemplate =  $("#schedule-table-row-template").html();
 	
-	const date = formatShortDate(new Date());
-	const dateInput = $("#date-input");
+	const date = DateUtils.formatShortDate(new Date());
+	const dateInput = <any>$("#date-input");
 	const change = e => { 
 		if (!dateInput[0].validity.badInput) {
 			updateScheduleData(e.target.value);
@@ -19,8 +22,8 @@ async function init() {
 	dateInput.change(change);
 	dateInput.click(change);
 	dateInput.val(date);
-	await updateScheduleData(date);
-}
+	updateScheduleData(date);
+});
 
 /**
  * Update the schedule table with the games for the selected date.
@@ -30,7 +33,7 @@ async function updateScheduleData(dateString) {
 		return;
 	}
 
-	$("#date-label").text(formatLongDate(new Date(dateString)));
+	$("#date-label").text(DateUtils.formatLongDate(new Date(dateString)));
 
 	lastDate = dateString;
 
@@ -40,21 +43,21 @@ async function updateScheduleData(dateString) {
 
 	// Download game data if needed.
 	if (!scheduleCache.has(dateString)) {
-		const schedule = await downloadSchedule(dateString);
+		const schedule = await restUtils.downloadSchedule(dateString);
 		scheduleCache.set(dateString, schedule);
 	}
 
 	table.empty();
 
-	const games = scheduleCache.get(dateString).games;
+	const games = scheduleCache.get(dateString);
 	if (games.length > 0) {
 		for (const game of games) {
-			if (!game.time) {
-				game.time = formatTime(new Date(game.date))
+			if (!(<any>game).startTime) {
+				(<any>game).startTime = DateUtils.formatTime(new Date(game.date))
 			}
 
 			// Format the row template with the game data.
-			table.append(Mustache.render(scheduleRowTemplate, game));
+			table.append(mustache.render(scheduleRowTemplate, game));
 		}
 	} else {
 		table.text("NO GAMES SCHEDULED");

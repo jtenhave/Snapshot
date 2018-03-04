@@ -1,22 +1,24 @@
+import { GameData } from "../../common/data/GameData";
 
 /**
  * Download schedule data for particular day from the NHL API.
  */
-async function downloadSchedule(dateString) {
-    return await download(`${window.location.protocol}/schedule?date=${dateString}`);
+export async function downloadSchedule(dateString) {
+    const schedule = await download(`${window.location.protocol}/schedule?date=${dateString}`);
+    return schedule.games.map(g => GameData.fromJSON(g));
 }
 
 /**
  * Download game data for a given game ID.
  */
-async function downloadGame(id) {
+export async function downloadGame(id) {
     return await download(`${window.location.protocol}/game?id=${id}`);
 }
 
 /**
  * Download data from a url.
  */
-function download(url) {
+function download(url: string): any {
     return new Promise((resolve, reject) => {
 		var request = new XMLHttpRequest();
 		request.onload = () => { 
