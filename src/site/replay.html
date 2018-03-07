@@ -5,26 +5,31 @@
 		<link href="css/snapshot.css" rel="stylesheet">
 		<link href="css/replay.css" rel="stylesheet">
 		<link href="https://fonts.googleapis.com/css?family=Sintony" rel="stylesheet">
-		<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/mustache.js/2.3.0/mustache.js"></script>
-		<script src="dateUtils.js"></script>
-		<script src="js/sync/PVRWebSocket.js"></script>
-		<script src="js/replay.js"></script>
-		<script src="js/restUtils.js"></script>
+		<script src="require.js"></script>
+		<script>
+			require({
+				baseUrl: "",
+				paths: {
+					jquery: "https://code.jquery.com/jquery-3.3.1.min",
+					mustache: "../mustache.min"
+				}
+			}, [ "js/replay" ]);
+		</script>
 	</head>
 	
-	<body onload="init();">
+	<body>
 		<div id="snapshot-header">
 			<h1>SNAPSHOT</h1>
 		</div>
 		<div id="snapshot-page">
-		<h2 id="snapshot-page-title">Synchronize With Game</h2>
-		<div id="replay-matchup"></div>
-		<div id="replay-content"></div>
+			<h2 id="snapshot-page-title">Synchronize With Game</h2>
+			<div id="replay-matchup"></div>
+			<div id="replay-content"></div>
+		</div>
 		<template id="matchup-template">
-			<h3>{{time}}</h3>
-			<img class="logo" src="images/teams/{{away.id}}.png"></img>{{away.name}} @ 
-			<img class="logo" src="images/teams/{{home.id}}.png"></img>{{home.name}}
+			<h3>{{startTime}}</h3>
+			<img class="logo" src="images/teams/{{teams.away.id}}.png"></img>{{teams.away.name}} @ 
+			<img class="logo" src="images/teams/{{teams.home.id}}.png"></img>{{teams.home.name}}
 		</template>
 		<template id="content-loading-template">
 			<img class="content-loading" src="images/content-loading.png"></img>
@@ -52,7 +57,7 @@
 					</tr>
 					<tr>
 						<td>
-							<button type="button" class="sync-input" onclick="sync()">Sync</button>
+							<button id="sync-button" type="button" class="sync-input">Sync</button>
 							<label id="sync-error"></label>
 						</td>
 					</tr>
@@ -91,16 +96,16 @@
 			</input>
 		</template>
 		<template id="ot-period-slider">
-				<input id="period-slider" type="range" min="0" max="300" step="1" list="tickmarks" value="0">
-					<datalist id="tickmarks">
-						<option value="0">
-						<option value="60" label="1:00">
-						<option value="120" label="2:00">
-						<option value="180" label="3:00">
-						<option value="240" label="4:00">
-						<option value="300">
-					</datalist>
-				</input>
-			</template>
+			<input id="period-slider" type="range" min="0" max="300" step="1" list="tickmarks" value="0">
+				<datalist id="tickmarks">
+					<option value="0">
+					<option value="60" label="1:00">
+					<option value="120" label="2:00">
+					<option value="180" label="3:00">
+					<option value="240" label="4:00">
+					<option value="300">
+				</datalist>
+			</input>
+		</template>
 	</body>
 </html>

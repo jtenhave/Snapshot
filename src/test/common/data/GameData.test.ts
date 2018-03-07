@@ -381,4 +381,86 @@ describe("GameData", () => {
             assert.strictEqual(parsedGameData.finished, false);
         });
     });
+
+    describe("periodCount()", () => {
+        it("Returns correct period count for no plays", () => {
+            const gameData = new GameData();
+
+            assert.strictEqual(gameData.periodCount, 1);
+
+            gameData.plays = [];
+
+            assert.strictEqual(gameData.periodCount, 1);
+        });
+
+        it("Returns correct period count", () => {
+            const gameData = new GameData();
+            gameData.plays = <any>[{ period: 2}];
+
+            assert.strictEqual(gameData.periodCount, 2);
+        });
+
+        it("Returns correct period count for shootout game", () => {
+            const gameData = new GameData();
+            gameData.plays = <any>[{ period: 5}];
+            gameData.playoffs = false;
+
+            assert.strictEqual(gameData.periodCount, 4);
+        });
+
+        it("Returns correct period count for playoff game", () => {
+            const gameData = new GameData();
+            gameData.plays = <any>[{ period: 5}];
+            gameData.playoffs = true;
+
+            assert.strictEqual(gameData.periodCount, 5);
+        });
+    });
+
+    describe("calculateGameTime()", () => {
+        it("Returns game start is timestamp is before any play", () => {
+            const gameData = new GameData();
+            gameData.plays = <any>[{ startTimestamp: 123}];
+
+            const gameTime = gameData.calculateGameTime(100);
+
+            assert.strictEqual(gameTime.period, 1);
+            assert.strictEqual(gameTime.time, 0);
+            assert.strictEqual(gameTime.totalTime, 0);
+        });
+
+        it("Returns correct time if timestamp falls in a play", () => {
+            const gameData = new GameData();
+            gameData.plays = <any>[{ startTimestamp: 5000, endTimestamp: 20000, start: 5, period: 2}];
+
+            const gameTime = gameData.calculateGameTime(11000);
+
+            assert.strictEqual(gameTime.period, 2);
+            assert.strictEqual(gameTime.time, 11);
+            assert.strictEqual(gameTime.totalTime, 1211);
+        });
+
+        it("Returns correct time if timestamp falls between plays", () => {
+            const gameData = new GameData();
+            gameData.plays = <any>[{ startTimestamp: 5000, endTimestamp: 10000, start: 5, period: 2},
+                { startTimestamp: 15000, endTimestamp: 20000}];
+
+            const gameTime = gameData.calculateGameTime(12500);
+
+            assert.strictEqual(gameTime.period, 2);
+            assert.strictEqual(gameTime.time, 10);
+            assert.strictEqual(gameTime.totalTime, 1210);
+        });
+
+        it("Returns correct time if timestamp falls in intermission", () => {
+            const gameData = new GameData();
+            gameData.plays = <any>[{ startTimestamp: 5000, endTimestamp: 10000, start: 1195, period: 2}];
+
+            const gameTime = gameData.calculateGameTime(20000);
+
+            assert.strictEqual(gameTime.period, 2);
+            assert.strictEqual(gameTime.time, 1200);
+            assert.strictEqual(gameTime.totalTime, 2400);
+        });
+    });
 });

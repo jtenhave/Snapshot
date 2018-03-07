@@ -8,6 +8,27 @@ import { Team } from "./Team";
 import { TimeUtils } from "../TimeUtils";
 
 /**
+ * Represents a point in the game.
+ */
+export interface GameTime {
+
+    /**
+     * Current period in the game.
+     */
+    period: number;
+
+    /**
+     * Time elapsed in the current period.
+     */
+    time: number;
+
+    /**
+     * Time elapsed in the game.
+     */
+    totalTime: number;
+}
+
+/**
  * Class that represents advanced data about a game.
  */
 export class GameData {
@@ -51,6 +72,23 @@ export class GameData {
      * Plays in the game.
      */
     plays: Play[];
+
+    /**
+     * Number of periods available in the live data.
+     */
+    get periodCount(): number {
+        const length = this.plays && this.plays.length;
+        if (!length) {
+            return 1;
+        }
+     
+        let periods = this.plays[length - 1].period;
+        if (!this.playoffs && periods > 4) {
+            periods = 4;
+        }
+     
+        return periods;
+    }
 
     constructor(rawData?: any) {
         if (rawData) {
@@ -243,6 +281,38 @@ export class GameData {
     }
 
     /**
+     * Calculate the current game time given a timestamp.
+     */
+    calculateGameTime(timestamp: number): GameTime {
+        var index = this.plays.findIndex(p => p.startTimestamp > timestamp);
+        if (index < 0) {
+            index = this.plays.length;
+        } else if (index === 0) {
+            return {
+                period: 1,
+                time: 0,
+                totalTime: 0
+            };
+        }
+     
+        var play = this.plays[index - 1];
+
+        // Check if the timestamp falls between plays.
+        if (play.endTimestamp && play.endTimestamp < timestamp) {
+            timestamp = play.endTimestamp;
+        }
+     
+        var seconds = play.start + (timestamp - play.startTimestamp) / TimeUtils.MILLISECONDS;
+        seconds = Math.min(seconds, TimeUtils.PERIOD_LEN);
+     
+        return {
+            period: play.period,
+            time: seconds,
+            totalTime: (play.period - 1) * TimeUtils.PERIOD_LEN + seconds
+        };
+    }
+
+    /**
      * Converts game data to minified json.
      */
     toJSON(): any {
@@ -252,7 +322,8 @@ export class GameData {
             po: this.playoffs,
             s: this.started,
             f: this.finished,
-            d: this.date
+            d: this.date,
+            ti: this.time
         }
 
         if (this.plays) {
@@ -272,7 +343,8 @@ export class GameData {
         gameData.playoffs = json.po;
         gameData.started = json.s;
         gameData.finished = json.f;
-        gameData.date = json.d
+        gameData.date = json.d;
+        gameData.time = json.ti;
 
         if (json.p && !short) {
             gameData.plays = json.p.map(p => Play.fromJSON(p));

@@ -4,7 +4,10 @@
  */
 export class TimeUtils {
     
-    private static PERIOD_LEN: number = 1200;
+    /**
+     * Length of a period in seconds.
+     */
+    static PERIOD_LEN: number = 1200;
 
     /**
      * Milliseconds.

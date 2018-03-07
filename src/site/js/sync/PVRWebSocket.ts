@@ -1,8 +1,13 @@
+import { ISyncSource } from "./ISyncSource";
 
 /**
  * Contains a web socket that wraps PVR multicast broadcast.
  */
-class PVRWebSocket {
+export class PVRWebSocket implements ISyncSource {
+    
+    private address: string;
+
+    private callback: (time: number) => void;
 
     constructor(address) {
         this.address = address;
@@ -11,7 +16,7 @@ class PVRWebSocket {
     /**
      * Attempt to connect to the web socket.
      */
-    async connect() {
+    connect(): Promise<void> {
         return new Promise((resolve, reject) => {
             try {
                 const ws = new WebSocket(`ws://${this.address}`, "pvr-sync");
@@ -29,7 +34,7 @@ class PVRWebSocket {
                     reject(new Error("Failed to connect to web socket"));
                 };
             } catch (e) {
-               reject(e);
+                reject(e);
             }
         });
     }
@@ -37,7 +42,8 @@ class PVRWebSocket {
     /** 
      * Register for web socket events.
      */
-    register (callback) {
+    register (callback: (time: number) => void): void {
         this.callback = callback;
     }
-}
+}   
+    

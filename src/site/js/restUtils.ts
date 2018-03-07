@@ -12,7 +12,8 @@ export async function downloadSchedule(dateString) {
  * Download game data for a given game ID.
  */
 export async function downloadGame(id) {
-    return await download(`${window.location.protocol}/game?id=${id}`);
+	const game = await download(`${window.location.protocol}/game?id=${id}`);
+    return GameData.fromJSON(game);
 }
 
 /**
