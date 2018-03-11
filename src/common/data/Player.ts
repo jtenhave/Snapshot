@@ -1,6 +1,43 @@
 import { EventData } from "./EventData";
 import { PolledData } from "./PolledData";
+import { DateUtils } from "../DateUtils";
 import { TimeUtils } from "../TimeUtils";
+
+/**
+ * A snapshot of player stats.
+ */
+export interface PlayerSnapshot {
+
+    /**
+     * The name of the player.
+     */
+    name: string;
+
+    /**
+     * The number of goals.
+     */
+    goals: number;
+
+    /**
+     * The number of assists.
+     */
+    assists: number;
+
+    /**
+     * The number of shots.
+     */
+    shots: number;
+
+    /**
+     * The number of hits.
+     */
+    hits: number;
+
+    /**
+     * The total time on ice.
+     */
+    toi: string;
+}
 
 /**
  * Class that represents a player in the game.
@@ -74,6 +111,24 @@ export class Player {
                 this.toi = TimeUtils.toSeconds(rawData.stats.skaterStats.timeOnIce);
             }   
         } 
+    }
+
+    /**
+     * Create a snapshot of player stats.
+     */
+    createSnapshot(time: number): PlayerSnapshot {
+        let toi = this.tois.getValue(time);
+        let minutes = Math.floor(toi / TimeUtils.MINUTE);
+        let seconds = toi % TimeUtils.MINUTE;
+        
+        return {
+            name: this.name,
+            goals: this.goals.getCount(time),
+            assists: this.assists.getCount(time),
+            shots: this.shots.getCount(time),
+            hits: this.hits.getCount(time),
+            toi: `${DateUtils.formatWithLeadingZero(minutes)}:${DateUtils.formatWithLeadingZero(seconds)}`
+        }
     }
 
     /**

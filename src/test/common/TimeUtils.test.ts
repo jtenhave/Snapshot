@@ -22,6 +22,12 @@ describe("TimeUtils", function() {
 
             assert.strictEqual(result, 388);
         });
+
+        it("Returns correct value for reverse ot period time", function() {       
+            const result = TimeUtils.toPeriodTime("3:32", true, true);
+
+            assert.strictEqual(result, 60 + 28);
+        });
     });
 
     describe("toTotalTime()", function() {
@@ -35,6 +41,12 @@ describe("TimeUtils", function() {
             const result = TimeUtils.toTotalTime("13:32", 1, true);
 
             assert.strictEqual(result, 1588);
+        });
+
+        it("Returns correct value for reverse ot period time", function() {       
+            const result = TimeUtils.toTotalTime("3:32", 3, true, true);
+
+            assert.strictEqual(result, 3688);
         });
     });
 });

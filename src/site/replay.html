@@ -82,7 +82,52 @@
 						</td>
 					</tr>
 				</tbody>
-			</table>		
+			</table>
+			<hr>
+			<table rules=rows>
+					<thead>
+						<tr>
+							<th width="40%">Stats</th>
+							<th>Goals</th>
+							<th>Assists</th>
+							<th>Shots</th>
+							<th>Hits</th>
+							<th>TOI</th>
+						</tr>
+					</thead>
+					<tbody id="stats-table">
+					</tbody>
+				</table>		
+		</template>
+		<template id="team-stats-row-template">
+			<tr>
+				<td>
+					<div id="teams-stats-selector">
+						<button id="away-team-button" class="team-button-selected team-select-item">
+							<img class="logo" src="images/teams/{{teams.away.id}}.png"></img>		
+						</button>
+						<button id="home-team-button" class="team-button team-select-item">
+							<img class="logo" src="images/teams/{{teams.home.id}}.png"></img>	
+						</button>
+						<h3 id="selected-team" class="team-select-item"></h3>
+					</div>
+				</td>
+				<td id="team-goals"></td>
+				<td>-</td>
+				<td id="team-shots"></td>
+				<td id="team-hits"></td>
+				<td>-</td>
+			</tr>
+		</template>
+		<template id="player-stats-row-template">
+			<tr>
+				<td>{{name}}</td>
+				<td>{{goals}}</td>
+				<td>{{assist}}</td>
+				<td>{{shots}}</td>
+				<td>{{hits}}</td>
+				<td>{{toi}}</td>
+			</tr>
 		</template>
 		<template id="full-period-slider">
 			<input id="period-slider" type="range" min="0" max="1200" step="1" list="tickmarks" value="0">

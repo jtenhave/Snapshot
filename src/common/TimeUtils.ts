@@ -10,9 +10,19 @@ export class TimeUtils {
     static PERIOD_LEN: number = 1200;
 
     /**
+     * Length of a regular season overtime period in seconds.
+     */
+    static OT_PERIOD_LEN: number = 300;
+
+    /**
      * Milliseconds.
      */
-    static MILLISECONDS: number = 1000; 
+    static MILLISECONDS: number = 1000;
+
+    /**
+     * Seconds per minute.
+     */
+    static MINUTE: number = 60;
     
     /**
      * Convert a time string in format "mm:SS" to a number of seconds.
@@ -25,16 +35,16 @@ export class TimeUtils {
     /**
      * Convert a time string in format "mm:SS" to a number of seconds in a period.
      */
-    static toPeriodTime(time: string, reverse?: boolean): number {
+    static toPeriodTime(time: string, reverse?: boolean, short?: boolean): number {
         const seconds = TimeUtils.toSeconds(time);
-        return reverse ? TimeUtils.PERIOD_LEN - seconds : seconds;
+        return reverse ? (short ? TimeUtils.OT_PERIOD_LEN : TimeUtils.PERIOD_LEN) - seconds : seconds;
     }
     
     /**
      * Convert a time string and period to the total number of seconds in the game.
      */
-    static toTotalTime(time: string, period: number, reverse?: boolean) {
-        const seconds = TimeUtils.toPeriodTime(time, reverse);
+    static toTotalTime(time: string, period: number, reverse?: boolean, short?: boolean) {
+        const seconds = TimeUtils.toPeriodTime(time, reverse, short);
         return period * TimeUtils.PERIOD_LEN + seconds;
     }
 }

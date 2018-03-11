@@ -32,3 +32,23 @@ img.logo {
     width: 50%;
     margin: 20;
 }
+
+button.team-button {
+    border: none;
+    background: lightgray
+}
+
+button.team-button-selected {
+    border: 2px solid rgb(103, 163, 187);
+    background: rgb(156, 156, 156)
+}
+
+#teams-stats-selector {
+	display:flex;
+    flex-direction:row;
+    align-items: center;
+}
+
+.team-select-item {
+    margin: 10;
+}

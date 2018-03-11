@@ -1,4 +1,5 @@
 import { DateUtils } from "../../common/DateUtils";
+import { TimeUtils } from "../../common/TimeUtils";
 import { GameData } from "../../common/data/GameData";
 import { ISyncSource } from "site/js/sync/ISyncSource";
 import { PVRWebSocket } from "./sync/PVRWebSocket";
@@ -6,7 +7,6 @@ import * as $ from "jquery";
 import * as mustache from "mustache";
 import * as restUtils from "./restUtils";
 
-const MINUTE = 60;
 const DOWNLOAD_MIN_INTERVAL: number = 30000;
 const REDOWNLOAD_THRESHOLD: number = 120; // Two minutes
 const periodNames = ["1st", "2nd", "3rd", "OT", "OT2", "OT3", "OT4", "OT5"];
@@ -93,7 +93,7 @@ function setupSyncPanel(error?: Error, wsAddress?: string) {
 }
 
 /**
- * Update the period slider based on a timestamp from the sync source.
+ * Update the game controls based on a timestamp from the sync source.
  */
 async function updateGameTime(timestamp) {
    const gameTime = gameData.calculateGameTime(timestamp);
@@ -109,18 +109,78 @@ async function updateGameTime(timestamp) {
 }
 
 /**
-* Setup the period combo box and slider.
-*/
+ * Setup the stats table with team selector.
+ */
+function setupStatsTable() {
+    const table = $("#stats-table");
+    const template = $("#team-stats-row-template").html();
+
+    table.append(mustache.render(template, gameData));
+    const awayButton = $("#away-team-button");
+    const homeButton = $("#home-team-button");
+
+    let selected = awayButton;
+    $("#selected-team").text(gameData.teams.away.name);
+    updateStatsTable();
+
+    const click = (s) => {
+        if (s === selected) {
+            return;
+        }
+
+        const newSelected = selected === awayButton ? homeButton : awayButton;
+        newSelected.toggleClass("team-button");
+        newSelected.toggleClass("team-button-selected");
+
+        selected.toggleClass("team-button-selected");
+        selected.toggleClass("team-button");
+        selected = newSelected;
+
+        const team = selected === awayButton ? gameData.teams.away : gameData.teams.home;
+        $("#selected-team").text(team.name);
+        updateStatsTable();
+    };
+
+    awayButton.click(() => click(awayButton));
+    homeButton.click(() => click(homeButton));
+}
+
+/**
+ * Update the data in the stats table.
+ */
+function updateStatsTable() {
+    const team = $("#away-team-button").hasClass("team-button-selected") ? gameData.teams.away : gameData.teams.home;
+    
+    // Update the team stats
+    const snapshot = team.createSnapshot(getGameTime());
+    $("#team-goals").text(snapshot.goals);
+    $("#team-shots").text(snapshot.shots);
+    $("#team-hits").text(snapshot.hits);
+
+    const table = $("#stats-table");
+    table.find("tr:gt(0)").remove();
+    
+    const template = $("#player-stats-row-template").html();
+    for (let player of snapshot.players) {
+        table.append(mustache.render(template, player));
+    }
+}
+
+/**
+ * Setup the period combo box and slider.
+ */
 function setupGameControls() {
    replayElement.html($("#replay-template").html());
    const period = $("#period-combo");
    period.prop("disabled", !!syncSource);
    period.change(e => {
        setupPeriodSlider(0);
+       updateStatsTable();
    });
 
    setupPeriodCombo();
    setupPeriodSlider();
+   setupStatsTable();
 }
 
 /**
@@ -146,8 +206,8 @@ function setupPeriodCombo(period?: number): void {
 }
 
 /**
-* Setup the period slider. Display an OT slider if needed.
-*/
+ * Setup the period slider. Display an OT slider if needed.
+ */
 function setupPeriodSlider(time?: number) {
    const period = $("#period-combo");
    const currentPeriod = parseInt(<string>period.val());
@@ -172,17 +232,32 @@ function setupPeriodSlider(time?: number) {
 }
 
 /**
-* Register event handlers for slider events.
-*/
+ * Register event handlers for slider events.
+ */
 function registerSliderEvents() {
-   const slider = $("#period-slider");
-   const sliderChange = () => {
-       var remaining = slider.prop("max") - <number>slider.val();
-       var minutes = Math.floor(remaining / MINUTE);
-       var seconds = remaining % MINUTE;
-       $("#period-label").text(`${minutes}:${DateUtils.formatWithLeadingZero(seconds)}`);
-   };
+    const slider = $("#period-slider");
+    const sliderChange = () => {
+        let remaining = slider.prop("max") - <number>slider.val();
+        let minutes = Math.floor(remaining / TimeUtils.MINUTE);
+        let seconds = remaining % TimeUtils.MINUTE;
+        $("#period-label").text(`${minutes}:${DateUtils.formatWithLeadingZero(seconds)}`);
+    };
 
-   slider[0].oninput = sliderChange;
-   slider.prop("disabled", !!syncSource);
+    slider[0].oninput = sliderChange;
+    slider[0].onchange = () => updateStatsTable();
+
+    slider.prop("disabled", !!syncSource);
+}
+
+/**
+ * Gets the current time from game controls.
+ */
+function getGameTime() {
+    const periodCombo = $("#period-combo");
+    const slider = $("#period-slider");
+
+    const period = parseInt(<string>periodCombo.find('option:selected').val());
+    const time = $("#period-label").text();
+
+    return TimeUtils.toTotalTime(time, period - 1, true, !gameData.playoffs && period === 4);
 }

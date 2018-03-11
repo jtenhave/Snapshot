@@ -1,4 +1,4 @@
-import { Player } from "./Player";
+import { Player, PlayerSnapshot } from "./Player";
 
 const triCodes = {
     "1": "NJD",
@@ -32,6 +32,32 @@ const triCodes = {
     "52": "WPG",
     "53": "ARI",
     "54": "VGK"
+}
+
+/**
+ * A snapshot of team stats.
+ */
+export interface TeamSnapshot {
+
+    /**
+     * The number of goals
+     */
+    goals: number;
+
+    /**
+     * The number of shots.
+     */
+    shots: number;
+
+    /**
+     * The number of hits.
+     */
+    hits: number;
+
+    /**
+     * Player snapshots.
+     */
+    players: PlayerSnapshot[];
 }
 
 /**
@@ -82,6 +108,19 @@ export class Team {
     findPlayer(id: string): Player {
         if (this.players) {
             return this.players.find(p => p.id === id);
+        }
+    }
+
+    /**
+     * Creates a snapshot of team stats.
+     */
+    createSnapshot(time: number): TeamSnapshot {
+        var players = this.players.map(p => p.createSnapshot(time));
+        return {
+            goals: players.reduce((a, c) => a + c.goals, 0),
+            shots: players.reduce((a, c) => a + c.shots, 0),
+            hits: players.reduce((a, c) => a + c.hits, 0),
+            players: players
         }
     }
 

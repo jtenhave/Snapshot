@@ -220,18 +220,23 @@ export class GameData {
      * Parse the total elapsed time in the game.
      */
     parseTotalTime(rawData: any): number {
-        const period = rawData.liveData.linescore.currentPeriod;
+        let period: number = rawData.liveData.linescore.currentPeriod;
         let time = rawData.liveData.linescore.currentPeriodTimeRemaining;
         
         if (time === "END" || time == "Final") {
             time = "0:00";
         }
-    
+
+        if (!this.playoffs && period > 4) {
+            period = 4;
+        }
+        
+        const ot = !this.playoffs && period === 4;
         if (time == undefined) {
-            time = "20:00";
+            time = ot ? "5:00" : "20:00";
         }
 
-        return TimeUtils.toTotalTime(time, period - 1, true);
+        return TimeUtils.toTotalTime(time, period - 1, true, ot);
     }
 
     /**

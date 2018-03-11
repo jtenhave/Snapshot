@@ -215,7 +215,7 @@ describe("GameData", () => {
     });
 
     describe("parseTotalTime()", () => {
-        it("Returns correct value when period", () => {
+        it("Returns correct value", () => {
             const gameData = new GameData();
             gameData.playoffs = false;
             const rawData = {
@@ -282,6 +282,56 @@ describe("GameData", () => {
             assert.strictEqual(result, 3600);
         });
 
+        it("Returns correct value when in regular season overtime", () => {
+            const gameData = new GameData();
+            gameData.playoffs = false;
+            const rawData = {
+                liveData: {
+                    linescore: {
+                        currentPeriod: 4,
+                        currentPeriodTimeRemaining: "3:34"
+                    }
+                }
+            }
+
+            const result = gameData.parseTotalTime(rawData);
+
+            assert.strictEqual(result, 3600 + 60 + 26);
+        });
+
+        it("Returns correct value when in regular season overtime not started", () => {
+            const gameData = new GameData();
+            gameData.playoffs = false;
+            const rawData = {
+                liveData: {
+                    linescore: {
+                        currentPeriod: 4,
+                        currentPeriodTimeRemaining: undefined
+                    }
+                }
+            }
+
+            const result = gameData.parseTotalTime(rawData);
+
+            assert.strictEqual(result, 3600);
+        });
+
+        it("Returns correct value when in regular season shootout", () => {
+            const gameData = new GameData();
+            gameData.playoffs = false;
+            const rawData = {
+                liveData: {
+                    linescore: {
+                        currentPeriod: 5,
+                        currentPeriodTimeRemaining: undefined
+                    }
+                }
+            }
+
+            const result = gameData.parseTotalTime(rawData);
+
+            assert.strictEqual(result, 3600);
+        });
     });
 
     describe("isFinished()", () => {
