@@ -13,6 +13,7 @@ describe("ShotEvent", () => {
             assert.strictEqual(event.isInPlayEvent, true);
             assert.strictEqual(event.period, 1);
             assert.strictEqual(event.shooter, "8469521");
+            assert.strictEqual(event.goalie, "8475215");
         });
     });
 });

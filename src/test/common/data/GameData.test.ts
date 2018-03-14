@@ -131,8 +131,11 @@ describe("GameData", () => {
             gameData.parseEvent(event);
 
             const player = gameData.findTeam("MTL").findPlayer("8469521");
+            const goalie = gameData.findTeam("BUF").findPlayer("8475215");
             assert.strictEqual(player.shots.times.length === 1, true);
             assert.strictEqual(player.shots.times[0], event.totalTime);
+            assert.strictEqual(goalie.shots.times[0], event.totalTime);
+            assert.strictEqual(goalie.blocks.times[0], event.totalTime);
         });
 
         it("Goal event parsed properly", () => {
@@ -145,12 +148,14 @@ describe("GameData", () => {
 
             const scorer = gameData.findTeam("BUF").findPlayer("8469506");
             const assist = gameData.findTeam("BUF").findPlayer("8476495");
+            const goalie = gameData.findTeam("MTL").findPlayer("8471679");
             assert.strictEqual(scorer.shots.times.length === 1, true);
             assert.strictEqual(scorer.shots.times[0], event.totalTime);
             assert.strictEqual(scorer.goals.times.length === 1, true);
             assert.strictEqual(scorer.goals.times[0], event.totalTime);
             assert.strictEqual(assist.assists.times.length === 1, true);
             assert.strictEqual(assist.assists.times[0], event.totalTime);
+            assert.strictEqual(goalie.shots.times[0], event.totalTime);
         });
 
         it("Faceoff event parsed properly", () => {

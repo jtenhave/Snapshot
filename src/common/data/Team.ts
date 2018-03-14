@@ -55,6 +55,21 @@ export interface TeamSnapshot {
     hits: number;
 
     /**
+     * The number of faceoff wins.
+     */
+    faceoffWins: number;
+    
+    /**
+     * The number of faceoff losses.
+     */
+    faceoffLosses: number;
+
+    /**
+     * Faceoff percentage.
+     */
+    faceoffPercent: string;
+
+    /**
      * Player snapshots.
      */
     players: PlayerSnapshot[];
@@ -116,10 +131,17 @@ export class Team {
      */
     createSnapshot(time: number): TeamSnapshot {
         var players = this.players.map(p => p.createSnapshot(time));
+
+        const faceoffWins = players.reduce((a, c) => a + c.faceoffWins, 0);
+        const faceoffLosses = players.reduce((a, c) => a + c.faceoffLosses, 0);
+
         return {
             goals: players.reduce((a, c) => a + c.goals, 0),
-            shots: players.reduce((a, c) => a + c.shots, 0),
+            shots: players.reduce((a, c) => c.position === "G" ? a : a + c.shots, 0),
             hits: players.reduce((a, c) => a + c.hits, 0),
+            faceoffWins: faceoffWins,
+            faceoffLosses: faceoffLosses,
+            faceoffPercent: Player.createFaceoffPercent(faceoffWins, faceoffLosses),
             players: players
         }
     }

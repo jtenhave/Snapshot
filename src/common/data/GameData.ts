@@ -1,4 +1,5 @@
 import { Event } from "./events/Event";
+import { BlockedShotEvent } from "./events/BlockedShotEvent";
 import { FaceoffEvent } from "./events/FaceoffEvent";
 import { GoalEvent } from "./events/GoalEvent";
 import { HitEvent } from "./events/HitEvent";
@@ -172,20 +173,28 @@ export class GameData {
         // Shot event.
         if (event instanceof ShotEvent) {
             const shooter = team.findPlayer(event.shooter);
-            shooter.shots.addTime(event.totalTime);
+            const goalie = team.opposition.findPlayer(event.goalie);
+            shooter && shooter.shots.addTime(event.totalTime);
+            goalie && goalie.shots.addTime(event.totalTime);
+            goalie && goalie.blocks.addTime(event.totalTime);
         }
 
         // Goal event.
         if (event instanceof GoalEvent) {
             const scorer = team.findPlayer(event.scorer);
             const assistants = event.assistants.map(a => team.findPlayer(a));
+            const goalie = team.opposition.findPlayer(event.goalie);
 
-            scorer.goals.addTime(event.totalTime);
-            scorer.shots.addTime(event.totalTime);
-
+            scorer && scorer.goals.addTime(event.totalTime);
+            scorer && scorer.shots.addTime(event.totalTime);
+            
             for (const assistant of assistants) {
-                assistant.assists.addTime(event.totalTime);
-            }     
+                assistant && assistant.assists.addTime(event.totalTime);
+            }
+
+            if (goalie) {
+                goalie && goalie.shots.addTime(event.totalTime);
+            }
         }
 
         // Faceoff event.
@@ -193,14 +202,20 @@ export class GameData {
             const winner = team.findPlayer(event.winner);
             const loser = team.opposition.findPlayer(event.loser);
             
-            winner.faceoffWin.addTime(event.totalTime);
-            loser.faceoffLoss.addTime(event.totalTime);
+            winner && winner.faceoffWin.addTime(event.totalTime);
+            loser && loser.faceoffLoss.addTime(event.totalTime);
         }
 
         // Hit event.
         if (event instanceof HitEvent) {
             const hitter = team.findPlayer(event.hitter);;
-            hitter.hits.addTime(event.totalTime);
+            hitter && hitter.hits.addTime(event.totalTime);
+        }
+
+        // Block event.
+        if (event instanceof BlockedShotEvent) {
+            const blocker = team.findPlayer(event.blocker);
+            blocker && blocker.blocks.addTime(event.totalTime);
         }
     }
 

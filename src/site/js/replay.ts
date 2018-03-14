@@ -6,6 +6,8 @@ import { PVRWebSocket } from "./sync/PVRWebSocket";
 import * as $ from "jquery";
 import * as mustache from "mustache";
 import * as restUtils from "./restUtils";
+import { PlayerSnapshot, Player } from "common/data/Player";
+import { TeamSnapshot } from "common/data/Team";
 
 const DOWNLOAD_MIN_INTERVAL: number = 30000;
 const REDOWNLOAD_THRESHOLD: number = 120; // Two minutes
@@ -65,11 +67,13 @@ async function sync(): Promise<void> {
 
         if (syncSource) {
             await syncSource.connect();
+            setupGameControls();
             syncSource.register(updateGameTime);
+        } else {
+            setupGameControls();
         }
 
         $("#snapshot-page-title").text("Replay Game");
-        setupGameControls();
     } catch(e) {
         setupSyncPanel(e, wsAddress);
         syncSource = undefined;
@@ -106,6 +110,7 @@ async function updateGameTime(timestamp) {
 
    setupPeriodCombo(gameTime.period);
    setupPeriodSlider(gameTime.time);
+   updateStatsTable();
 }
 
 /**
@@ -155,14 +160,60 @@ function updateStatsTable() {
     const snapshot = team.createSnapshot(getGameTime());
     $("#team-goals").text(snapshot.goals);
     $("#team-shots").text(snapshot.shots);
+    $("#team-faceoffs").text(snapshot.faceoffPercent);
     $("#team-hits").text(snapshot.hits);
 
     const table = $("#stats-table");
     table.find("tr:gt(0)").remove();
     
     const template = $("#player-stats-row-template").html();
-    for (let player of snapshot.players) {
-        table.append(mustache.render(template, player));
+    const skaterTemplate = $("#skater-divider-row-template").html();
+    const goalieTemplate = $("#goalie-divider-row-template").html();
+
+    let defenceBreak = false;
+    let goalieBreak = false;
+    const sortedPlayers = snapshot.players.sort((a, b) => rankPlayer(a) - rankPlayer(b));
+    let highlight = 0;
+
+    table.append(mustache.render(skaterTemplate, { skater: "Forwards"}));
+    for (let player of sortedPlayers) {
+        if (!defenceBreak && player.position === "D") {
+            table.append(mustache.render(skaterTemplate, { skater: "Defence"}));
+            defenceBreak = true;
+            highlight = 0;
+        }
+
+        if (!goalieBreak && player.position === "G") {
+            table.append(mustache.render(goalieTemplate));
+            goalieBreak = true;
+            highlight = 0;
+        }
+
+        const playerTemplate = { ...player, background: highlight % 2 != 0 ? "#C8C8C8" : "#FFFFFF"};
+        if (goalieBreak) {
+            const shots = playerTemplate.shots;
+            const blocks = playerTemplate.blocks;
+
+            playerTemplate.goals = shots > 0 ? <any>(blocks / shots).toFixed(3).toString() : "-";
+            playerTemplate.assists = shots - blocks;
+        }
+
+        const row = mustache.render(template, playerTemplate);
+        highlight++;
+        table.append(row);
+    }
+}
+
+/**
+ * Create a number that can be used to sort a player.
+ */
+function rankPlayer(player: PlayerSnapshot) {
+    if (player.position === "C" || player.position === "R" || player.position === "L") {
+        return player.number;
+    } else if (player.position === "D") {
+        return 100 + player.number;
+    } else {
+        return 200 + player.number;
     }
 }
 
@@ -175,11 +226,10 @@ function setupGameControls() {
    period.prop("disabled", !!syncSource);
    period.change(e => {
        setupPeriodSlider(0);
-       updateStatsTable();
    });
 
    setupPeriodCombo();
-   setupPeriodSlider();
+   setupPeriodSlider(); 
    setupStatsTable();
 }
 
@@ -227,6 +277,7 @@ function setupPeriodSlider(time?: number) {
    lastPeriod = currentPeriod;
 
    const slider = $("#period-slider");
+   var current = slider.val();
    slider.val(time || 0);
    slider[0].oninput(undefined);
 }

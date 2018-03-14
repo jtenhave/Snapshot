@@ -15,10 +15,16 @@ export class ShotEvent extends Event {
      */
     shooter: string;
 
+    /**
+     * Goalie that made the save.
+     */
+    goalie: string;
+
     constructor(rawData) {
         super(rawData);
 
         this.isInPlayEvent = true;
         this.shooter = this.findPlayer("Shooter", rawData);
+        this.goalie = this.findPlayer("Goalie", rawData);
     }
 }

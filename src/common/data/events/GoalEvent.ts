@@ -11,9 +11,14 @@ export class GoalEvent extends Event {
     readonly isPlayStopEvent: boolean = true;
 
     /**
-     * Player that stored the score.
+     * Player that scored the score.
      */
     scorer: string;
+
+    /**
+     * Goalie that was scored on.
+     */
+    goalie: string;
 
     /**
      * Players that assisted on the goal.
@@ -26,5 +31,6 @@ export class GoalEvent extends Event {
         this.isPlayStopEvent = true;
         this.scorer = this.findPlayer("Scorer", rawData);
         this.assistants = this.findPlayers("Assist", rawData);
+        this.goalie = this.findPlayer("Goalie", rawData);
     }
 }

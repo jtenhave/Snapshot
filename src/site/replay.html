@@ -84,13 +84,14 @@
 				</tbody>
 			</table>
 			<hr>
-			<table rules=rows>
+			<table>
 					<thead>
 						<tr>
 							<th width="40%">Stats</th>
 							<th>Goals</th>
 							<th>Assists</th>
 							<th>Shots</th>
+							<th>Faceoff %</th>
 							<th>Hits</th>
 							<th>TOI</th>
 						</tr>
@@ -115,18 +116,33 @@
 				<td id="team-goals"></td>
 				<td>-</td>
 				<td id="team-shots"></td>
+				<td id="team-faceoffs"></td>
 				<td id="team-hits"></td>
 				<td>-</td>
 			</tr>
 		</template>
 		<template id="player-stats-row-template">
-			<tr>
-				<td>{{name}}</td>
+			<tr style="background-color:{{background}}">
+				<td>#{{number}} {{name}} <i>{{position}}</i></td>
 				<td>{{goals}}</td>
-				<td>{{assist}}</td>
+				<td>{{assists}}</td>
 				<td>{{shots}}</td>
+				<td>{{faceoffPercent}}</td>
 				<td>{{hits}}</td>
 				<td>{{toi}}</td>
+			</tr>
+		</template>
+		<template id="skater-divider-row-template">
+			<tr style="background-color:rgb(160, 160, 160)">
+				<td colspan="7"><b>{{skater}}</b></td>
+			</tr>
+		</template>
+		<template id="goalie-divider-row-template">
+			<tr style="background-color:rgb(160, 160, 160)">
+				<td><b>Goalies</b></td>
+				<td>SV%</td>
+				<td>Goals allowed</td>
+				<td colspan="4">Shots faced</td>
 			</tr>
 		</template>
 		<template id="full-period-slider">
