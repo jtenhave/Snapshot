@@ -33,6 +33,11 @@ img.logo {
     margin: 20;
 }
 
+#delay-label {
+    margin-left: 100;
+    margin-right: 20;
+}
+
 button.team-button {
     border: none;
     background: lightgray

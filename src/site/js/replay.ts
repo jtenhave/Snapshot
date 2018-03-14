@@ -100,17 +100,18 @@ function setupSyncPanel(error?: Error, wsAddress?: string) {
  * Update the game controls based on a timestamp from the sync source.
  */
 async function updateGameTime(timestamp) {
-   const gameTime = gameData.calculateGameTime(timestamp);
-   const now = new Date();
+    const delay = <number>$("#delay").val() * TimeUtils.MILLISECONDS;
+    const gameTime = gameData.calculateGameTime(timestamp - delay);
+    const now = new Date();
 
-   // Check if the game data needs to be downloaded again.
-   if (gameData.time - gameTime.totalTime < REDOWNLOAD_THRESHOLD && (now.getTime() - lastDownloadTime.getTime()) > DOWNLOAD_MIN_INTERVAL) { 
-       await downloadGameData();
-   }
+    // Check if the game data needs to be downloaded again.
+    if (gameData.time - gameTime.totalTime < REDOWNLOAD_THRESHOLD && (now.getTime() - lastDownloadTime.getTime()) > DOWNLOAD_MIN_INTERVAL) { 
+        await downloadGameData();
+    }
 
-   setupPeriodCombo(gameTime.period);
-   setupPeriodSlider(gameTime.time);
-   updateStatsTable();
+    setupPeriodCombo(gameTime.period);
+    setupPeriodSlider(gameTime.time);
+    updateStatsTable();
 }
 
 /**
@@ -227,6 +228,9 @@ function setupGameControls() {
    period.change(e => {
        setupPeriodSlider(0);
    });
+   
+   const delay = $("#delay");
+   delay.prop("disabled", !syncSource);
 
    setupPeriodCombo();
    setupPeriodSlider(); 
