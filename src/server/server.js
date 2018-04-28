@@ -12,6 +12,7 @@ const retryUtils = require("./retryUtils");
 const logger = logUtils.logger;
 
 const POLLING_INTERVAL = 15000;
+const SERVER_PORT = 80;
 
 setupServer();
 
@@ -237,7 +238,7 @@ function setupExpress(database) {
 
 	return new Promise((resolve, reject) => {
 		// Start web server.
-		app.listen(8125, function () {
+		app.listen(SERVER_PORT, function () {
 			logger.info('Running Snapshot web server.');
 			resolve();
 		});

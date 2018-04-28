@@ -23,6 +23,7 @@ let replayElement: JQuery<HTMLElement>;
 // Retrieve the game ID from the URL query params.
 const searchParams = new URLSearchParams(window.location.search);
 const id = searchParams.get("game");
+const canSync = searchParams.get("sync");
 
 $(document).ready(async () => {
     // Display the loading icon
@@ -35,7 +36,12 @@ $(document).ready(async () => {
 
     $("#replay-matchup").html(mustache.render($("#matchup-template").html(), gameData));
     
-    setupSyncPanel();
+    if (canSync) {
+        setupSyncPanel();
+    } else {
+        setupGameControls();
+        $("#snapshot-page-title").text("Replay Game");
+    } 
 });
 
 /**
