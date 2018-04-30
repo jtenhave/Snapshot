@@ -3,6 +3,7 @@ import * as assert from "assert";
 import * as gameSamples from "../../samples/gameData";
 import * as scheduleSamples from "../../samples/scheduleData";
 import { GameData } from "../../../common/data/GameData";
+import { GameTime } from "../../../common/data/GameTime";
 import { FaceoffEvent } from "../../../common/data/events/FaceoffEvent";
 import { GoalEvent } from "../../../common/data/events/GoalEvent";
 import { HitEvent } from "../../../common/data/events/HitEvent";
@@ -17,7 +18,7 @@ describe("GameData", () => {
 
             assert.strictEqual(gameData.id, "2017020445");
             assert.strictEqual(gameData.playoffs, false);
-            assert.strictEqual(gameData.time, 3072);
+            assert.strictEqual(gameData.time.totalTime, 3072);
             assert.notStrictEqual(gameData.teams, undefined);
             assert.notStrictEqual(gameData.teams.home, undefined);
             assert.notStrictEqual(gameData.teams.away, undefined);
@@ -202,8 +203,8 @@ describe("GameData", () => {
             playerB.toi = 500;
             const playerC = gameDataC.findTeam("MTL").findPlayer("8470642");
             playerC.toi = 600;
-            gameDataB.time = 900;
-            gameDataC.time = 1000;
+            gameDataB.time = new GameTime(1, 900);
+            gameDataC.time = new GameTime(1, 1000);;
 
             gameDataB.merge(gameDataA);
             gameDataC.merge(gameDataB);
@@ -234,7 +235,7 @@ describe("GameData", () => {
 
             const result = gameData.parseTotalTime(rawData);
 
-            assert.strictEqual(result, 1466);
+            assert.strictEqual(result.totalTime, 1466);
         });
 
         it("Returns correct value when period is 'END'", () => {
@@ -251,7 +252,7 @@ describe("GameData", () => {
 
             const result = gameData.parseTotalTime(rawData);
 
-            assert.strictEqual(result, 1200);
+            assert.strictEqual(result.totalTime, 1200);
         });
 
         it("Returns correct value when period is 'Final'", () => {
@@ -268,7 +269,7 @@ describe("GameData", () => {
 
             const result = gameData.parseTotalTime(rawData);
 
-            assert.strictEqual(result, 3600);
+            assert.strictEqual(result.totalTime, 3600);
         });
 
         it("Returns correct value when period is undefined", () => {
@@ -284,7 +285,7 @@ describe("GameData", () => {
 
             const result = gameData.parseTotalTime(rawData);
 
-            assert.strictEqual(result, 3600);
+            assert.strictEqual(result.totalTime, 3600);
         });
 
         it("Returns correct value when in regular season overtime", () => {
@@ -301,7 +302,7 @@ describe("GameData", () => {
 
             const result = gameData.parseTotalTime(rawData);
 
-            assert.strictEqual(result, 3600 + 60 + 26);
+            assert.strictEqual(result.totalTime, 3600 + 60 + 26);
         });
 
         it("Returns correct value when in regular season overtime not started", () => {
@@ -318,7 +319,7 @@ describe("GameData", () => {
 
             const result = gameData.parseTotalTime(rawData);
 
-            assert.strictEqual(result, 3600);
+            assert.strictEqual(result.totalTime, 3600);
         });
 
         it("Returns correct value when in regular season shootout", () => {
@@ -335,7 +336,7 @@ describe("GameData", () => {
 
             const result = gameData.parseTotalTime(rawData);
 
-            assert.strictEqual(result, 3600);
+            assert.strictEqual(result.totalTime, 3600);
         });
     });
 
@@ -352,7 +353,7 @@ describe("GameData", () => {
             const gameData = new GameData();
             const rawData = JSON.parse(JSON.stringify(gameSamples.inProgressGameData));
             rawData.gameData.status.statusCode = "7";
-            gameData.time = 3599;
+            gameData.time = new GameTime(3, 1199);
 
             const finished = gameData.isFinished(rawData);
 
@@ -363,7 +364,7 @@ describe("GameData", () => {
             const gameData = new GameData();
             const rawData = JSON.parse(JSON.stringify(gameSamples.inProgressGameData));
             rawData.gameData.status.statusCode = "7";
-            gameData.time = 3601;
+            gameData.time = new GameTime(4,1);
             rawData.liveData.linescore.teams.away.goals = 2
             rawData.liveData.linescore.teams.home.goals = 2
 
@@ -376,7 +377,7 @@ describe("GameData", () => {
             const gameData = new GameData();
             const rawData = JSON.parse(JSON.stringify(gameSamples.inProgressGameData));
             rawData.gameData.status.statusCode = "7";
-            gameData.time = 3601;
+            gameData.time = new GameTime(4,1);
 
             const finished = gameData.isFinished(rawData);
 

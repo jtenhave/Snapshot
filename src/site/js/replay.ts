@@ -1,6 +1,7 @@
 import { DateUtils } from "../../common/DateUtils";
 import { TimeUtils } from "../../common/TimeUtils";
 import { GameData } from "../../common/data/GameData";
+import { GameTime } from "../../common/data/GameTime";
 import { ISyncSource } from "site/js/sync/ISyncSource";
 import { PVRWebSocket } from "./sync/PVRWebSocket";
 import * as $ from "jquery";
@@ -50,6 +51,18 @@ $(document).ready(async () => {
 async function downloadGameData(): Promise<void> {
     lastDownloadTime = new Date();
     gameData = await restUtils.downloadGame(id);
+}
+
+/**
+ * Download the latest game data, only if the current data is out of date..
+ */
+async function downloadGameDataIfRequired(replayTime: number): Promise<void> {
+    const now = new Date();
+    
+    // Check if the game data needs to be downloaded again.
+    if (gameData.time.totalTime - replayTime < REDOWNLOAD_THRESHOLD && (now.getTime() - lastDownloadTime.getTime()) > DOWNLOAD_MIN_INTERVAL) { 
+        await downloadGameData();
+    }
 }
 
 /**
@@ -108,12 +121,8 @@ function setupSyncPanel(error?: Error, wsAddress?: string) {
 async function updateGameTime(timestamp) {
     const delay = <number>$("#delay").val() * TimeUtils.MILLISECONDS;
     const gameTime = gameData.calculateGameTime(timestamp - delay);
-    const now = new Date();
 
-    // Check if the game data needs to be downloaded again.
-    if (gameData.time - gameTime.totalTime < REDOWNLOAD_THRESHOLD && (now.getTime() - lastDownloadTime.getTime()) > DOWNLOAD_MIN_INTERVAL) { 
-        await downloadGameData();
-    }
+    await downloadGameDataIfRequired(gameTime.totalTime);
 
     setupPeriodCombo(gameTime.period);
     setupPeriodSlider(gameTime.time);
@@ -162,9 +171,10 @@ function setupStatsTable() {
  */
 function updateStatsTable() {
     const team = $("#away-team-button").hasClass("team-button-selected") ? gameData.teams.away : gameData.teams.home;
-    
+    var replayTime = getGameTime();
+
     // Update the team stats
-    const snapshot = team.createSnapshot(getGameTime());
+    const snapshot = team.createSnapshot(replayTime.totalTime);
     $("#team-goals").text(snapshot.goals);
     $("#team-shots").text(snapshot.shots);
     $("#team-faceoffs").text(snapshot.faceoffPercent);
@@ -233,10 +243,12 @@ function setupGameControls() {
    period.prop("disabled", !!syncSource);
    period.change(e => {
        setupPeriodSlider(0);
+       updateStatsTable();
    });
    
    const delay = $("#delay");
    delay.prop("disabled", !syncSource);
+   delay.prop("visible", !syncSource);
 
    setupPeriodCombo();
    setupPeriodSlider(); 
@@ -287,7 +299,6 @@ function setupPeriodSlider(time?: number) {
    lastPeriod = currentPeriod;
 
    const slider = $("#period-slider");
-   var current = slider.val();
    slider.val(time || 0);
    slider[0].oninput(undefined);
 }
@@ -305,20 +316,31 @@ function registerSliderEvents() {
     };
 
     slider[0].oninput = sliderChange;
-    slider[0].onchange = () => updateStatsTable();
+    slider[0].onchange = () => sliderValueChanged(slider);
 
     slider.prop("disabled", !!syncSource);
 }
 
 /**
+ * Handles change events for the slider.
+ */
+async function sliderValueChanged(slider) {
+    var replayTime = getGameTime();
+    if (replayTime.totalTime > gameData.time.totalTime) {
+        await downloadGameDataIfRequired(replayTime.totalTime);
+        setupPeriodSlider(gameData.time.time);
+    }
+
+    updateStatsTable();
+}
+
+/**
  * Gets the current time from game controls.
  */
-function getGameTime() {
+function getGameTime() : GameTime {
     const periodCombo = $("#period-combo");
-    const slider = $("#period-slider");
-
     const period = parseInt(<string>periodCombo.find('option:selected').val());
-    const time = $("#period-label").text();
+    const time = TimeUtils.toPeriodTime($("#period-label").text(), true, !gameData.playoffs && period === 4);
 
-    return TimeUtils.toTotalTime(time, period - 1, true, !gameData.playoffs && period === 4);
+    return new GameTime(period, time);
 }

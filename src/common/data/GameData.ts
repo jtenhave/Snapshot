@@ -1,33 +1,13 @@
 import { Event } from "./events/Event";
 import { BlockedShotEvent } from "./events/BlockedShotEvent";
 import { FaceoffEvent } from "./events/FaceoffEvent";
+import { GameTime } from "./GameTime";
 import { GoalEvent } from "./events/GoalEvent";
 import { HitEvent } from "./events/HitEvent";
 import { Play } from "./Play";
 import { ShotEvent } from "./events/ShotEvent";
 import { Team } from "./Team";
 import { TimeUtils } from "../TimeUtils";
-
-/**
- * Represents a point in the game.
- */
-export interface GameTime {
-
-    /**
-     * Current period in the game.
-     */
-    period: number;
-
-    /**
-     * Time elapsed in the current period.
-     */
-    time: number;
-
-    /**
-     * Time elapsed in the game.
-     */
-    totalTime: number;
-}
 
 /**
  * Class that represents advanced data about a game.
@@ -67,7 +47,7 @@ export class GameData {
     /**
      * Time elapsed in the game.
      */
-    time: number;
+    time: GameTime;
 
     /**
      * Plays in the game.
@@ -234,7 +214,7 @@ export class GameData {
     /**
      * Parse the total elapsed time in the game.
      */
-    parseTotalTime(rawData: any): number {
+    parseTotalTime(rawData: any): GameTime {
         let period: number = rawData.liveData.linescore.currentPeriod;
         let time = rawData.liveData.linescore.currentPeriodTimeRemaining;
         
@@ -251,7 +231,9 @@ export class GameData {
             time = ot ? "5:00" : "20:00";
         }
 
-        return TimeUtils.toTotalTime(time, period - 1, true, ot);
+        var seconds = TimeUtils.toPeriodTime(time,  true, ot);
+
+        return new GameTime(period, seconds);
     }
 
     /**
@@ -266,7 +248,7 @@ export class GameData {
                 if (playerSource) {
                     // Merge TOI.
                     player.tois = playerSource.tois;
-                    player.tois.addValue(this.time, player.toi);
+                    player.tois.addValue(this.time.totalTime, player.toi);
                 } 
             }
         }
@@ -282,7 +264,7 @@ export class GameData {
         }
 
         // Check if the third period is over.
-        if (this.time < 3600) {
+        if (this.time.totalTime < 3600) {
             return false;
         }
 
@@ -308,11 +290,7 @@ export class GameData {
         if (index < 0) {
             index = this.plays.length;
         } else if (index === 0) {
-            return {
-                period: 1,
-                time: 0,
-                totalTime: 0
-            };
+            return new GameTime(1, 0);
         }
      
         var play = this.plays[index - 1];
@@ -325,11 +303,7 @@ export class GameData {
         var seconds = play.start + (timestamp - play.startTimestamp) / TimeUtils.MILLISECONDS;
         seconds = Math.min(seconds, TimeUtils.PERIOD_LEN);
      
-        return {
-            period: play.period,
-            time: seconds,
-            totalTime: (play.period - 1) * TimeUtils.PERIOD_LEN + seconds
-        };
+        return new GameTime(play.period, seconds);
     }
 
     /**
@@ -343,7 +317,7 @@ export class GameData {
             s: this.started,
             f: this.finished,
             d: this.date,
-            ti: this.time
+            ti: this.time.toJSON()
         }
 
         if (this.plays) {
@@ -364,7 +338,7 @@ export class GameData {
         gameData.started = json.s;
         gameData.finished = json.f;
         gameData.date = json.d;
-        gameData.time = json.ti;
+        gameData.time = GameTime.fromJSON(json.ti);
 
         if (json.p && !short) {
             gameData.plays = json.p.map(p => Play.fromJSON(p));
