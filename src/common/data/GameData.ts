@@ -316,8 +316,11 @@ export class GameData {
             po: this.playoffs,
             s: this.started,
             f: this.finished,
-            d: this.date,
-            ti: this.time.toJSON()
+            d: this.date
+        }
+
+        if (this.time) {
+            json.ti = this.time.toJSON();
         }
 
         if (this.plays) {
@@ -338,10 +341,13 @@ export class GameData {
         gameData.started = json.s;
         gameData.finished = json.f;
         gameData.date = json.d;
-        gameData.time = GameTime.fromJSON(json.ti);
 
         if (json.p && !short) {
             gameData.plays = json.p.map(p => Play.fromJSON(p));
+        }
+
+        if (json.ti) {
+            gameData.time = GameTime.fromJSON(json.ti); 
         }
 
         return gameData;

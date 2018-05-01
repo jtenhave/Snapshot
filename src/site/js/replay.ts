@@ -54,7 +54,7 @@ async function downloadGameData(): Promise<void> {
 }
 
 /**
- * Download the latest game data, only if the current data is out of date..
+ * Download the latest game data, only if the current data is out of date.
  */
 async function downloadGameDataIfRequired(replayTime: number): Promise<void> {
     const now = new Date();
@@ -119,7 +119,7 @@ function setupSyncPanel(error?: Error, wsAddress?: string) {
  * Update the game controls based on a timestamp from the sync source.
  */
 async function updateGameTime(timestamp) {
-    const delay = <number>$("#delay").val() * TimeUtils.MILLISECONDS;
+    const delay = <number>$("#delay-input").val() * TimeUtils.MILLISECONDS;
     const gameTime = gameData.calculateGameTime(timestamp - delay);
 
     await downloadGameDataIfRequired(gameTime.totalTime);
@@ -247,8 +247,11 @@ function setupGameControls() {
    });
    
    const delay = $("#delay");
-   delay.prop("disabled", !syncSource);
-   delay.prop("visible", !syncSource);
+   if (syncSource) {
+       delay.show();
+   } else {
+       delay.hide();
+   }
 
    setupPeriodCombo();
    setupPeriodSlider(); 

@@ -6,10 +6,13 @@
   "scripts": {
     "build": "tsc -p src --outDir ./dist && cpy server/**/*.js ../dist --parents --cwd=src && cpy site/**/*.css site/**/*.woff site/**/*.html site/**/*.png ../dist --parents --cwd=src && npm run build-libs",
     "build-libs": "cpy node_modules/requirejs/require.js dist/libs && cpy node_modules/mustache/mustache.min.js dist/libs",
+    "build-run": "npm run build && npm run start-server",
     "start-all": "npm run start-mongodb && npm run start-server",
     "start-server": "node dist/server/server.js",
     "start-mongodb": "mkdirp data/mongodb && start mongod.exe --dbpath data/mongodb",
     "test": "mocha -r ts-node/register src/**/*.test.ts"
+
+
   },
   "repository": {
     "type": "git",

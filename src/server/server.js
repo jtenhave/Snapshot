@@ -67,7 +67,7 @@ async function setupPollingScheduler(database) {
 
 	let games;
 	try {
-		games = await getScheduleForDay(database, DateUtils.formatShortDate(today));
+		games = await getScheduleForDay(database, DateUtils.formatShortDate(today), true);
 	} catch(e) {
 		logger.error(`Failed to download schedule for ${today}.`, e);
 	}
@@ -138,24 +138,28 @@ function setupDataPolling(games, database) {
 /**
  * Gets the list of games scheduled for today. Downloads from the NHL API if necessary.
  */
-async function getScheduleForDay(database, dateString) {
+async function getScheduleForDay(database, dateString, forceDownload) {
 	const scheduleCollection = database.collection("schedule");
 	const gameDataCollection = database.collection("gameData");
 
-	const schedule = await scheduleCollection.findOne({ _id: dateString });
-	if (schedule) {
-		let games = await gameDataCollection.find({ _id : { "$in": schedule.games }}).toArray();
-		return games.map(g => GameData.fromJSON(g, true));
+	if (!forceDownload) {
+		const schedule = await scheduleCollection.findOne({ _id: dateString });
+		if (schedule) {
+			let games = await gameDataCollection.find({ _id : { "$in": schedule.games }}).toArray();
+			return games.map(g => GameData.fromJSON(g, true));
+		}
 	}
-
+	
 	const gameData = await retryUtils.retry(async (i) => await downloadScheduleForDay(dateString));
 
 	// Don't insert anything if the download fails.
-	await scheduleCollection.insertOne({ _id: dateString, games: gameData.map(g => g.id) });
-	if (gameData.length) {
-		await gameDataCollection.insertMany(gameData.map(g => g.toJSON()));
+	await scheduleCollection.replaceOne({ _id : dateString }, { _id: dateString, games: gameData.map(g => g.id) }, { upsert: true });
+	
+	const gameDataJson = gameData.map(g => g.toJSON());
+	for (var json of gameDataJson) {
+		gameDataCollection.replaceOne({ _id: json._id}, json, { upsert: true });
 	}
-
+	
 	return gameData;
 }
 
