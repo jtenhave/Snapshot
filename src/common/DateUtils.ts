@@ -33,9 +33,9 @@ export class DateUtils {
      */
     static formatLongDate(date: Date): string {
         const weekday = DateUtils.formatWeekday(date);
-        const year = date.getUTCFullYear();
-        const month = monthNames[date.getUTCMonth()];
-        const day = date.getUTCDate();
+        const year = date.getFullYear();
+        const month = monthNames[date.getMonth()];
+        const day = date.getDate();
         return `${weekday}, ${month} ${day}, ${year}`;
     }
 
@@ -43,7 +43,7 @@ export class DateUtils {
      * Convert a Date object to string with format "dddd";
      */
     static formatWeekday(date: Date): string {
-        switch(date.getUTCDay()) {
+        switch(date.getDay()) {
             case 0:
                 return "Sunday";
             case 1:

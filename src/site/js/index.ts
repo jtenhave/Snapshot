@@ -33,7 +33,10 @@ async function updateScheduleData(dateString) {
 		return;
 	}
 
-	$("#date-label").text(DateUtils.formatLongDate(new Date(dateString)));
+	var dateParts = dateString.split(/\D/);
+	var date = new Date(dateParts[0], dateParts[1]-1, dateParts[2]);
+
+	$("#date-label").text(DateUtils.formatLongDate(date));
 
 	lastDate = dateString;
 
