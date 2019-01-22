@@ -1,5 +1,7 @@
 # Snapshot
-Snapshot displays stats for finished NHL games as if they were live. At any moment of the game you get a complete statistical picture without spoiling the result. This is a great way to enhance your experience when watching recorded games. 
+Snapshot displays stats for finished NHL games as if they were live. At any moment of the game you get a complete statistical picture without spoiling the result. This is a great way to enhance your experience when watching recorded games.
+
+Currently hosted [here](http://ec2-18-236-182-65.us-west-2.compute.amazonaws.com).
 
 ## Choose Your Game
 Decide which game you want to replay. You can replay any game that has already started.
